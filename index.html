@@ -214,6 +214,11 @@
     .cell:focus-visible{outline:3px solid rgba(89,201,196,.45);outline-offset:1px}
     .cell.active{background:transparent;border-color:transparent;transform:scale(1.05)}
     .cell.found{background:rgba(141,205,86,.13);border-color:rgba(141,205,86,.28)}
+    .cell.hint-cell{
+      background:rgba(111,76,0,.22);
+      border-color:#6f4c00;
+      box-shadow:inset 0 0 0 2px rgba(111,76,0,.28);
+    }
     .path-svg{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none;overflow:visible}
     .current-word{
       margin:14px 3px 2px;
@@ -348,7 +353,7 @@
       <h2 class="setting-title">Difficulty</h2>
       <div class="choice-grid" id="difficultyChoices">
         <button class="choice selected" type="button" data-difficulty="beginner">
-          <strong>Beginner</strong><span>The full target-word list is visible.</span>
+          <strong>Beginner</strong><span>Full word list + hints.</span>
         </button>
         <button class="choice" type="button" data-difficulty="middle">
           <strong>Middle</strong><span>No word list, but hints are available.</span>
@@ -683,13 +688,13 @@
     modePill.textContent=`${SIZE}×${SIZE} · ${label}`;
 
     beginnerWordsSection.classList.toggle("hidden",difficulty!=="beginner");
-    hintBtn.classList.toggle("hidden",difficulty!=="middle");
+    hintBtn.classList.toggle("hidden",difficulty==="hard");
 
     if(difficulty==="beginner"){
       sideTitle.textContent="Theme words";
       sideDescription.textContent="All target words are visible. Trace the letters in order using neighbouring cells.";
       difficultyMessage.classList.add("hidden");
-      hintNote.textContent="Beginner mode: the full target-word list stays visible.";
+      hintNote.textContent="Beginner mode: the full target-word list is visible and hints are available.";
     }else if(difficulty==="middle"){
       sideTitle.textContent="Progress";
       sideDescription.textContent="The word list is hidden. Use a hint when you get stuck.";
@@ -704,7 +709,7 @@
       hintNote.textContent="Hard mode gives no help. Extra English words can still earn bonus points.";
     }
 
-    gameControls.classList.toggle("single",difficulty!=="middle");
+    gameControls.classList.toggle("single",difficulty==="hard");
   }
 
   function rcToIndex(r,c){return r*SIZE+c}
@@ -1132,11 +1137,6 @@
       if(poly)svgEl.appendChild(poly);
     });
 
-    if(hintPath){
-      const poly=makePolyline(hintPath.map(cellCenter),"#9a6a00",.58);
-      if(poly)svgEl.appendChild(poly);
-    }
-
     /* Every active selection gets exactly the same trail, regardless of
        whether it will later be valid, invalid, target, or bonus. */
     if(selected.length){
@@ -1290,21 +1290,29 @@
   }
 
   function showHint(){
-    if(difficulty!=="middle")return;
+    if(difficulty==="hard")return;
     const remaining=targets.filter(w=>!foundTargets.has(w));
     if(!remaining.length)return;
 
     const word=remaining[Math.floor(Math.random()*remaining.length)];
-    hintPath=intendedPaths.get(word);
-    drawPaths();
+    hintPath=intendedPaths.get(word) || [];
     const HINT_DISPLAY_MS=5000;
+
+    // Highlight the actual grid boxes needed for the hinted word.
+    // No connecting path is shown, so the player still has to work out the order.
+    hintPath.forEach(index=>{
+      boardEl.children[index]?.classList.add("hint-cell");
+    });
+
     toast(`Hint: ${word}`,"hint",HINT_DISPLAY_MS);
     score=Math.max(0,score-50);
     updateHUD();
 
     setTimeout(()=>{
+      hintPath.forEach(index=>{
+        boardEl.children[index]?.classList.remove("hint-cell");
+      });
       hintPath=null;
-      drawPaths();
     },HINT_DISPLAY_MS);
   }
 
@@ -1319,6 +1327,7 @@
     loadingEl.classList.add("show");
     await new Promise(resolve=>setTimeout(resolve,20));
 
+    boardEl.querySelectorAll(".hint-cell").forEach(el=>el.classList.remove("hint-cell"));
     foundTargets=new Set();
     foundPaths=new Map();
     foundBonus=new Set();
