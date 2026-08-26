@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Word Path – Grid & Difficulty</title>
+  <style>
+    :root{
+      --bg:#f4f6f2;
+      --panel:#ffffff;
+      --text:#172019;
+      --muted:#718078;
+      --accent:#59c9c4;
+      --accent2:#8dcd56;
+      --bonus:#e8b34c;
+      --line:#dfe7df;
+      --shadow:0 16px 50px rgba(25,45,30,.10);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:
+        radial-gradient(circle at 15% 0%,rgba(89,201,196,.14),transparent 32rem),
+        radial-gradient(circle at 100% 100%,rgba(141,205,86,.14),transparent 35rem),
+        var(--bg);
+      color:var(--text);
+    }
+    button{font:inherit}
+    .app{width:min(1120px,100%);margin:0 auto;padding:22px}
+    .hidden{display:none!important}
+
+    /* Start screen */
+    .start-screen{
+      width:min(760px,100%);
+      margin:38px auto;
+      background:rgba(255,255,255,.94);
+      border:1px solid rgba(255,255,255,.96);
+      box-shadow:var(--shadow);
+      border-radius:30px;
+      padding:clamp(22px,5vw,42px);
+    }
+    .start-kicker{
+      color:var(--muted);
+      text-transform:uppercase;
+      letter-spacing:.14em;
+      font-weight:850;
+      font-size:11px;
+      margin-bottom:7px;
+    }
+    .start-screen h1{
+      margin:0;
+      font-size:clamp(36px,7vw,64px);
+      letter-spacing:-.055em;
+      line-height:.95;
+    }
+    .start-intro{
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.55;
+      max-width:610px;
+      margin:14px 0 30px;
+    }
+    .setting-section{margin-top:25px}
+    .setting-title{
+      font-size:14px;
+      font-weight:900;
+      margin:0 0 10px;
+      letter-spacing:-.01em;
+    }
+    .choice-grid{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:10px;
+    }
+    .choice{
+      appearance:none;
+      border:1px solid var(--line);
+      border-radius:17px;
+      padding:15px 12px;
+      background:#fafcfa;
+      color:var(--text);
+      cursor:pointer;
+      text-align:left;
+      min-height:86px;
+      transition:.14s ease;
+    }
+    .choice:hover{border-color:#bfd5c4}
+    .choice.selected{
+      border-color:var(--accent);
+      box-shadow:inset 0 0 0 2px rgba(89,201,196,.18);
+      background:rgba(89,201,196,.07);
+    }
+    .choice strong{display:block;font-size:19px;margin-bottom:5px}
+    .choice span{display:block;color:var(--muted);font-size:11px;line-height:1.4}
+    .start-btn{
+      width:100%;
+      margin-top:30px;
+      border:none;
+      border-radius:17px;
+      padding:15px 18px;
+      background:#18251c;
+      color:white;
+      font-weight:900;
+      cursor:pointer;
+      font-size:16px;
+    }
+
+    /* Game */
+    .topbar{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:18px;
+      margin-bottom:14px;
+    }
+    .game-title{
+      margin:0;
+      font-size:clamp(28px,4vw,44px);
+      line-height:1;
+      letter-spacing:-.04em;
+    }
+    .subtitle{margin:8px 0 0;color:var(--muted);font-size:14px}
+    .stats{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+    .stat{
+      background:rgba(255,255,255,.82);
+      border:1px solid rgba(255,255,255,.95);
+      box-shadow:0 8px 26px rgba(25,45,30,.06);
+      border-radius:16px;
+      padding:9px 13px;
+      min-width:92px;
+      text-align:center;
+    }
+    .stat b{display:block;font-size:18px}
+    .stat span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+
+    .theme-banner{
+      background:#172019;
+      color:white;
+      border-radius:18px;
+      padding:14px 18px;
+      margin-bottom:16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      flex-wrap:wrap;
+    }
+    .theme-kicker{font-size:11px;text-transform:uppercase;letter-spacing:.14em;opacity:.62;font-weight:800}
+    .theme-name{font-size:clamp(24px,4vw,36px);font-weight:900;letter-spacing:-.03em;line-height:1.05;margin-top:2px}
+    .theme-right{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .mode-pill{
+      border:1px solid rgba(255,255,255,.18);
+      border-radius:999px;
+      padding:7px 10px;
+      font-size:11px;
+      font-weight:850;
+      letter-spacing:.04em;
+      text-transform:uppercase;
+      background:rgba(255,255,255,.06);
+    }
+    .mode-button{
+      border:1px solid rgba(255,255,255,.2);
+      border-radius:999px;
+      padding:7px 10px;
+      background:transparent;
+      color:white;
+      font-size:11px;
+      font-weight:800;
+      cursor:pointer;
+    }
+
+    .layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
+    .game-card,.side-card{
+      background:rgba(255,255,255,.92);
+      border:1px solid rgba(255,255,255,.95);
+      box-shadow:var(--shadow);
+      border-radius:26px;
+    }
+    .game-card{padding:16px}
+    .board-wrap{
+      width:100%;
+      max-width:690px;
+      margin:0 auto;
+      aspect-ratio:1;
+      position:relative;
+      user-select:none;
+      touch-action:manipulation;
+    }
+    .board{
+      position:absolute;
+      inset:0;
+      display:grid;
+      gap:5px;
+    }
+    .cell{
+      position:relative;
+      z-index:2;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-width:0;
+      border-radius:12px;
+      background:#fbfcfa;
+      border:1px solid #e4ebe3;
+      font-family:Georgia,"Times New Roman",serif;
+      font-weight:700;
+      color:#1d251f;
+      cursor:pointer;
+      transition:transform .09s ease,background .12s ease,border-color .12s ease;
+    }
+    .cell:hover{border-color:#cbd9cc}
+    .cell:focus-visible{outline:3px solid rgba(89,201,196,.45);outline-offset:1px}
+    .cell.active{background:transparent;border-color:transparent;transform:scale(1.05)}
+    .cell.found{background:rgba(141,205,86,.13);border-color:rgba(141,205,86,.28)}
+    .path-svg{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none;overflow:visible}
+    .current-word{
+      margin:14px 3px 2px;
+      min-height:52px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border-radius:14px;
+      background:#f7faf7;
+      border:1px solid var(--line);
+      font-size:clamp(20px,2vw,28px);
+      font-weight:850;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      min-width:0;
+      transition:.12s ease;
+    }
+    .current-word.target-result{color:#2a6c37;border-color:rgba(141,205,86,.55);background:rgba(141,205,86,.12)}
+    .current-word.bonus-result{color:#72571e;border-color:rgba(232,179,76,.5);background:rgba(232,179,76,.12)}
+    .current-word.no-result{color:#6d7570;border-color:#dfe5df;background:#f5f7f5}
+    .timeout{height:4px;margin:5px 7px 0;border-radius:999px;background:#edf1ec;overflow:hidden}
+    .timeout>div{height:100%;width:0%;background:var(--accent);transform-origin:left}
+
+    .side-card{padding:18px;position:sticky;top:18px}
+    .side-card h2{margin:0 0 6px;font-size:22px;letter-spacing:-.02em}
+    .side-card p{margin:0 0 15px;color:var(--muted);font-size:13px;line-height:1.5}
+    .progress{height:9px;border-radius:999px;background:#edf1ec;overflow:hidden;margin-bottom:15px}
+    .progress>div{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .25s ease}
+    .words{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+    .word-chip{
+      padding:8px 9px;border-radius:11px;border:1px solid #e5ebe5;background:#fafcfa;
+      font-size:11px;font-weight:800;letter-spacing:.04em;text-align:center;text-transform:uppercase;
+      transition:.15s ease;overflow-wrap:anywhere;
+    }
+    .word-chip.found{color:#467936;background:rgba(141,205,86,.15);border-color:rgba(141,205,86,.4);text-decoration:line-through;opacity:.72}
+    .difficulty-message{
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:#fafcfa;
+      padding:13px;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.5;
+      margin-bottom:14px;
+    }
+    .bonus-box{border-top:1px solid #e7ece7;padding-top:14px;margin-top:4px}
+    .bonus-title{display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:12px;text-transform:uppercase;letter-spacing:.08em;font-weight:900;color:#615330}
+    .bonus-list{margin-top:8px;min-height:32px;display:flex;gap:6px;flex-wrap:wrap}
+    .bonus-chip{border-radius:999px;padding:5px 8px;background:rgba(232,179,76,.12);border:1px solid rgba(232,179,76,.3);color:#745d27;font-size:11px;font-weight:800;text-transform:uppercase}
+    .controls{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:15px}
+    .controls.single{grid-template-columns:1fr}
+    .btn{border:none;border-radius:14px;padding:11px 12px;font-weight:800;cursor:pointer;transition:transform .08s ease,opacity .15s ease}
+    .btn:active{transform:scale(.98)}
+    .btn.primary{background:#1c2a20;color:white}
+    .btn.secondary{background:#edf2ed;color:#223027}
+    .hint-note{margin-top:12px;font-size:12px;color:var(--muted);line-height:1.45}
+    .toast{
+      position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);
+      background:#152018;color:white;padding:11px 16px;border-radius:999px;font-weight:750;
+      box-shadow:0 14px 34px rgba(0,0,0,.18);opacity:0;pointer-events:none;transition:.18s ease;
+      z-index:50;white-space:nowrap;max-width:calc(100% - 30px);overflow:hidden;text-overflow:ellipsis;
+    }
+    .toast.show{opacity:1;transform:translate(-50%,0)}
+    .toast.bonus-toast{background:#6c5628}
+    .loading{
+      position:fixed;inset:0;background:rgba(244,246,242,.92);display:none;align-items:center;justify-content:center;
+      z-index:200;backdrop-filter:blur(4px);
+    }
+    .loading.show{display:flex}
+    .loading-card{background:white;border-radius:22px;padding:24px 28px;box-shadow:0 24px 60px rgba(0,0,0,.12);text-align:center;max-width:320px}
+    .spinner{width:38px;height:38px;margin:0 auto 14px;border-radius:50%;border:4px solid #d9e7dd;border-top-color:#59c9c4;animation:spin .9s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .win{
+      position:fixed;inset:0;background:rgba(10,20,12,.54);backdrop-filter:blur(8px);display:none;
+      align-items:center;justify-content:center;padding:20px;z-index:100;
+    }
+    .win.show{display:flex}
+    .win-card{width:min(420px,100%);background:white;border-radius:26px;padding:30px;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.25)}
+    .win-card .emoji{font-size:50px}
+    .win-card h3{font-size:30px;margin:8px 0}
+    .win-card p{color:var(--muted);line-height:1.5}
+    .win-card button{width:100%;margin-top:10px}
+
+    @media(max-width:900px){
+      .layout{grid-template-columns:1fr}
+      .side-card{position:static}
+    }
+    @media(max-width:620px){
+      .app{padding:12px}
+      .choice-grid{grid-template-columns:1fr}
+      .choice{min-height:auto}
+      .topbar{align-items:flex-start;flex-direction:column}
+      .stats{justify-content:flex-start}
+      .game-card{padding:10px;border-radius:18px}
+      .side-card{border-radius:18px}
+      .theme-banner{border-radius:16px}
+      .words{grid-template-columns:repeat(2,1fr)}
+    }
+  </style>
+</head>
+<body>
+<main class="app">
+  <section class="start-screen" id="startScreen">
+    <div class="start-kicker">Offline word game</div>
+    <h1>Word Path</h1>
+    <p class="start-intro">
+      Choose the grid size and difficulty before starting. The game now includes many more themes and a much larger offline word pool. Once the run begins, every following puzzle keeps the same mode until you choose “Change mode”.
+    </p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:-16px;margin-bottom:22px;">
+      <span style="padding:6px 9px;border-radius:999px;background:#f1f5f1;border:1px solid #e1e8e1;font-size:11px;font-weight:800;color:#5f6d64;">19 themes</span>
+      <span style="padding:6px 9px;border-radius:999px;background:#f1f5f1;border:1px solid #e1e8e1;font-size:11px;font-weight:800;color:#5f6d64;">879+ theme words</span>
+      <span style="padding:6px 9px;border-radius:999px;background:#f1f5f1;border:1px solid #e1e8e1;font-size:11px;font-weight:800;color:#5f6d64;">100% offline</span>
+    </div>
+
+    <div class="setting-section">
+      <h2 class="setting-title">Grid size</h2>
+      <div class="choice-grid" id="gridChoices">
+        <button class="choice selected" type="button" data-grid="6">
+          <strong>6×6</strong><span>36 letters · compact</span>
+        </button>
+        <button class="choice" type="button" data-grid="9">
+          <strong>9×9</strong><span>81 letters · more words</span>
+        </button>
+        <button class="choice" type="button" data-grid="12">
+          <strong>12×12</strong><span>144 letters · long puzzle</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="setting-section">
+      <h2 class="setting-title">Difficulty</h2>
+      <div class="choice-grid" id="difficultyChoices">
+        <button class="choice selected" type="button" data-difficulty="beginner">
+          <strong>Beginner</strong><span>The full target-word list is visible.</span>
+        </button>
+        <button class="choice" type="button" data-difficulty="middle">
+          <strong>Middle</strong><span>No word list, but hints are available.</span>
+        </button>
+        <button class="choice" type="button" data-difficulty="hard">
+          <strong>Hard</strong><span>No word list and no hints.</span>
+        </button>
+      </div>
+    </div>
+
+    <button class="start-btn" id="startBtn" type="button">Start game</button>
+  </section>
+
+  <section id="gameScreen" class="hidden">
+    <div class="topbar">
+      <div>
+        <h1 class="game-title">Word Path</h1>
+        <p class="subtitle">No time limit. Recognition happens only after the selection pause expires. Correct target spellings are accepted even if more than one valid route exists.</p>
+      </div>
+      <div class="stats">
+        <div class="stat"><b id="score">0</b><span>Score</span></div>
+        <div class="stat"><b id="foundCount">0/0</b><span>Theme words</span></div>
+        <div class="stat"><b id="bonusCount">0</b><span>Bonus</span></div>
+      </div>
+    </div>
+
+    <div class="theme-banner">
+      <div>
+        <div class="theme-kicker">Theme</div>
+        <div class="theme-name" id="themeName">Animals</div>
+      </div>
+      <div class="theme-right">
+        <span class="mode-pill" id="modePill">6×6 · Beginner</span>
+        <button class="mode-button" id="changeModeBtn" type="button">Change mode</button>
+      </div>
+    </div>
+
+    <section class="layout">
+      <div class="game-card">
+        <div class="board-wrap" id="boardWrap">
+          <svg class="path-svg" id="pathSvg" aria-hidden="true"></svg>
+          <div class="board" id="board"></div>
+        </div>
+
+        <div class="current-word" id="currentWord" aria-live="polite">Click a letter to start</div>
+        <div class="timeout" aria-hidden="true"><div id="timeoutBar"></div></div>
+      </div>
+
+      <aside class="side-card">
+        <h2 id="sideTitle">Theme words</h2>
+        <p id="sideDescription"></p>
+        <div class="progress"><div id="progressBar"></div></div>
+
+        <div id="beginnerWordsSection">
+          <div class="words" id="wordList"></div>
+        </div>
+
+        <div id="difficultyMessage" class="difficulty-message hidden"></div>
+
+        <div class="bonus-box">
+          <div class="bonus-title">
+            <span>Bonus words</span>
+            <span id="bonusPoints">+0 pts</span>
+          </div>
+          <div class="bonus-list" id="bonusList"></div>
+        </div>
+
+        <div class="controls" id="gameControls">
+          <button class="btn secondary hidden" id="hintBtn" type="button">Hint</button>
+          <button class="btn primary" id="newBtn" type="button">Next puzzle</button>
+        </div>
+
+        <div class="hint-note" id="hintNote"></div>
+      </aside>
+    </section>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<div class="loading" id="loading">
+  <div class="loading-card">
+    <div class="spinner"></div>
+    <div style="font-weight:900;font-size:18px;margin-bottom:6px;">Generating puzzle</div>
+    <div id="loadingText" style="font-size:13px;color:#718078;line-height:1.5;">Building the grid…</div>
+  </div>
+</div>
+
+<div class="win" id="win">
+  <div class="win-card">
+    <div class="emoji">🏆</div>
+    <h3>Puzzle complete!</h3>
+    <p id="winText"></p>
+    <button class="btn primary" id="playAgainBtn" type="button">Next puzzle</button>
+  </div>
+</div>
+
+<script>
+(() => {
+  const RESET_DELAY = 1500;
+  const RESULT_DISPLAY_MS = 360;
+  const TARGET_POINTS_PER_LETTER = 100;
+  const BONUS_POINTS_PER_LETTER = 35;
+  const MIN_BONUS_LENGTH = 3;
+
+  /* Large offline theme pools. The generator selects a unique subset whose
+     total letter count exactly matches the selected grid (36 / 81 / 144). */
+  const THEME_POOLS = [
+    {
+      name:"Animals",
+      words:["CHIMPANZEE","BUTTERFLY","CROCODILE","ALLIGATOR","ELEPHANT","DOLPHIN","PANTHER","RABBIT","MONKEY","TURTLE","PARROT","JAGUAR","HORSE","WHALE","TIGER","ZEBRA","PANDA","OTTER","KOALA","SHEEP","MOOSE","BEAVER","BADGER","FALCON","EAGLE","WOLF","BEAR","LION","SWAN","DUCK","FROG","FOX","EMU","ANT","OWL","APE","CAT","DOG","CAMEL","GORILLA","CHEETAH","LEOPARD","HAMSTER","PENGUIN","BUFFALO","DONKEY","GECKO","IGUANA","MANTIS","COBRA","SLOTH"]
+    },
+    {
+      name:"Ocean",
+      words:["JELLYFISH","SEAHORSE","STARFISH","OCTOPUS","DOLPHIN","TURTLE","MARLIN","SALMON","ANCHOR","LAGOON","CORAL","SHARK","WHALE","MANTA","OCEAN","PEARL","SHELL","COAST","REEF","SQUID","WAVES","TIDES","CRAB","SEAL","KELP","SURF","BOAT","WAVE","TIDE","SEA","FIN","EEL","COD","HARBOR","ISLAND","LOBSTER","SEAGULL","CURRENT","SEABED","PLANKTON","BARNACLE","SEASHELL","ANCHOVY","SARDINE","BUBBLES","SAILBOAT","BEACH","CLIFF","COVE","BAY"]
+    },
+    {
+      name:"Food",
+      words:["STRAWBERRY","CHOCOLATE","PINEAPPLE","BLUEBERRY","SANDWICH","SPAGHETTI","PANCAKE","BANANA","ORANGE","CARROT","CHEESE","TOMATO","COOKIE","YOGURT","MUFFIN","BREAD","GRAPE","HONEY","LEMON","MELON","PEACH","APPLE","MANGO","OLIVE","CREAM","TOAST","SALAD","BERRY","SUGAR","RICE","FIG","PIE","EGG","HAM","POTATO","AVOCADO","BURGER","NOODLES","WAFFLE","BISCUIT","CEREAL","BUTTER","CHERRY","COCONUT","GARLIC","GINGER","PUMPKIN","PEPPER","PASTA","SOUP"]
+    },
+    {
+      name:"Nature",
+      words:["WATERFALL","MOUNTAIN","RAINFOREST","SUNFLOWER","WOODLAND","MEADOW","FOREST","BREEZE","THUNDER","RAINBOW","RIVER","STONE","CLOUD","PLANT","GRASS","MAPLE","CEDAR","CLIFF","FLAME","FIELD","LEAF","PINE","MOSS","TREE","RAIN","SNOW","WIND","ROCK","OAK","SUN","SKY","FOG","MUD","VALLEY","DESERT","CANYON","GLACIER","JUNGLE","POND","STREAM","FLOWER","BLOSSOM","BRANCH","ROOT","VOLCANO","ISLAND","HILL","SHADOW","EARTH","GARDEN"]
+    },
+    {
+      name:"Space",
+      words:["TELESCOPE","ASTEROID","SATELLITE","SPACESHIP","UNIVERSE","GALAXY","NEBULA","METEOR","ROCKET","PLANET","COSMOS","CRATER","ORBIT","SOLAR","SATURN","VENUS","PLUTO","COMET","LUNAR","MOON","MARS","STAR","EARTH","SPACE","SUN","SKY","JUPITER","MERCURY","GRAVITY","ASTRONAUT","MISSION","MODULE","ECLIPSE","ALIEN","ORBITER","COSMIC","PLANETARY","STARDUST","MOONLIGHT","SUPERNOVA","BLACKHOLE","MILKYWAY","LAUNCH","CAPSULE","RADIATION","VACUUM"]
+    },
+    {
+      name:"Fantasy",
+      words:["ENCHANTMENT","ADVENTURER","DRAGON","WIZARD","KNIGHT","CASTLE","POTION","PRINCESS","SORCERER","TREASURE","MAGIC","SHIELD","GOBLIN","MERLIN","SWORD","CROWN","TOWER","GHOST","GIANT","FAIRY","SPELL","QUEST","RUNE","ELF","ORC","IMP","KINGDOM","DUNGEON","PHOENIX","UNICORN","WARLOCK","CRYSTAL","MYSTIC","ELIXIR","THRONE","ARMOR","SCROLL","CHARM","RIDDLE","PORTAL","MONSTER","HERO","VILLAIN","DRUID","TROLL","OGRE","WAND"]
+    },
+    {
+      name:"Technology",
+      words:["SMARTPHONE","COMPUTER","KEYBOARD","INTERNET","SOFTWARE","HARDWARE","DATABASE","BATTERY","SWITCH","SCREEN","SENSOR","CAMERA","TABLET","SERVER","ROBOT","PHONE","LASER","CABLE","MODEM","RADIO","PIXEL","VIDEO","MOTOR","CHIP","CODE","DATA","USB","APP","NETWORK","PROCESSOR","MEMORY","DISPLAY","WIRELESS","BLUETOOTH","SIGNAL","ROUTER","CIRCUIT","DEVICE","DIGITAL","STORAGE","LAPTOP","MONITOR","PRINTER","BROWSER","SYSTEM","UPLOAD","DOWNLOAD","BUTTON","TOUCH","POWER"]
+    },
+    {
+      name:"Sports",
+      words:["BASKETBALL","VOLLEYBALL","SWIMMING","FOOTBALL","BASEBALL","MARATHON","CYCLING","TENNIS","HOCKEY","BOXING","RUNNER","TRAINING","MATCH","COACH","SKATE","RUGBY","SCORE","POWER","SPORT","SWING","FIELD","RACE","CLIMB","JUMP","TEAM","GOAL","BALL","RUN","SKI","GYM","SPRINTER","STADIUM","PLAYER","REFEREE","MEDAL","TROPHY","FITNESS","WORKOUT","SURFING","SKATING","DIVING","ROWING","HIKING","BOWLING","SOCCER","GOLF","KAYAK","PADDLE"]
+    },
+    {
+      name:"Travel",
+      words:["ADVENTURE","AIRPORT","SUITCASE","PASSPORT","JOURNEY","HOLIDAY","HOTEL","TICKET","FLIGHT","TRAIN","TRAVEL","CAMPING","BACKPACK","MAP","ROAD","CITY","BEACH","MUSEUM","BRIDGE","ISLAND","BORDER","VILLAGE","COUNTRY","RESORT","HOSTEL","CABIN","CRUISE","FERRY","TAXI","BUS","CAR","TRIP","TOUR","GUIDE","CAMERA","LUGGAGE","STATION","PLATFORM","DEPARTURE","ARRIVAL","MOUNTAIN","HARBOR","MARKET","SOUVENIR","TRAIL","ROUTE","VACATION"]
+    },
+    {
+      name:"Music",
+      words:["GUITAR","PIANO","DRUMMER","MELODY","RHYTHM","CONCERT","SINGER","CHORUS","MUSIC","VIOLIN","TRUMPET","FLUTE","BANJO","LYRICS","STAGE","SOUND","BEAT","SONG","RADIO","BAND","DANCE","VOICE","RECORD","ALBUM","TUNE","BASS","SOLO","DJ","MIC","ORCHESTRA","KEYBOARD","SPEAKER","HEADPHONES","HARMONY","GROOVE","TEMPO","ARTIST","PLAYLIST","MUSICAL","CELLO","HARP","SAXOPHONE","CLARINET","PERCUSSION","MICROPHONE"]
+    },
+    {
+      name:"Home",
+      words:["KITCHEN","BEDROOM","BATHROOM","WINDOW","DOORWAY","CARPET","CURTAIN","PILLOW","BLANKET","TABLE","CHAIR","SOFA","LAMP","SHELF","MIRROR","DRAWER","CUPBOARD","GARAGE","GARDEN","FENCE","ROOF","WALL","FLOOR","STAIRS","CLOCK","VASE","CANDLE","BASKET","TOWEL","SHOWER","SINK","OVEN","FRIDGE","FREEZER","PAN","POT","PLATE","SPOON","FORK","KNIFE","MUG","GLASS","KEY","LOCK","BED","DESK","ROOM"]
+    },
+    {
+      name:"Transport",
+      words:["AIRPLANE","HELICOPTER","MOTORCYCLE","BICYCLE","SCOOTER","SUBWAY","TRAM","TRAIN","TRUCK","CAR","BUS","TAXI","FERRY","BOAT","SHIP","ROCKET","ENGINE","WHEEL","BRAKE","PEDAL","STEERING","STATION","TUNNEL","BRIDGE","ROAD","TRACK","RAIL","DRIVER","PILOT","CAPTAIN","VEHICLE","TRAFFIC","HIGHWAY","GARAGE","PARKING","FUEL","DIESEL","ELECTRIC","MOTOR","TIRE","SIGNAL","CARGO","SEAT","CABIN"]
+    },
+    {
+      name:"Weather",
+      words:["THUNDERSTORM","LIGHTNING","RAINBOW","SUNSHINE","SNOWFLAKE","BLIZZARD","DRIZZLE","TORNADO","HURRICANE","WEATHER","THUNDER","BREEZE","CLOUDY","STORM","RAIN","SNOW","WIND","SUNNY","FROST","MIST","FOG","ICE","HEAT","COLD","WARM","TEMPERATURE","FORECAST","HUMIDITY","CLIMATE","SHOWER","FREEZING","DROUGHT","MONSOON","CYCLONE","GUST","CLOUD","SKY"]
+    },
+    {
+      name:"School",
+      words:["NOTEBOOK","CLASSROOM","HOMEWORK","TEACHER","STUDENT","PENCIL","ERASER","RULER","LESSON","SCHOOL","BOOK","PAPER","DESK","CHAIR","BOARD","CLASS","TEST","EXAM","GRADE","MATH","SCIENCE","HISTORY","MUSIC","SPORT","LANGUAGE","LIBRARY","BACKPACK","LUNCH","BREAK","FRIEND","QUESTION","ANSWER","PROJECT","COMPUTER","CALCULATOR","DICTIONARY","READING","WRITING","SPELLING","DRAWING","LEARNING"]
+    },
+    {
+      name:"Jobs",
+      words:["ENGINEER","TEACHER","DOCTOR","NURSE","PILOT","CHEF","BAKER","FARMER","DRIVER","ARTIST","DESIGNER","MECHANIC","BUILDER","SCIENTIST","PROGRAMMER","DENTIST","LAWYER","WRITER","ACTOR","SINGER","DANCER","PLUMBER","ELECTRICIAN","CARPENTER","TAILOR","BARBER","CASHIER","MANAGER","POLICE","FIREFIGHTER","REPORTER","PHOTOGRAPHER","ARCHITECT","GARDENER","COACH","VET"]
+    },
+    {
+      name:"City",
+      words:["SKYSCRAPER","APARTMENT","BUILDING","STREET","AVENUE","TRAFFIC","CROSSING","STATION","MARKET","MUSEUM","THEATER","HOTEL","RESTAURANT","CAFE","PARK","BRIDGE","TUNNEL","SQUARE","FOUNTAIN","LIBRARY","HOSPITAL","SCHOOL","OFFICE","SHOP","STORE","BANK","PLAZA","SIDEWALK","BUS","TAXI","TRAIN","METRO","LIGHTS","TOWER","CHURCH","CASTLE","HARBOR","RIVER","ROAD","CITY"]
+    },
+    {
+      name:"Tricking",
+      words:["TRICKING","BACKFLIP","FRONTFLIP","SIDEFLIP","CARTWHEEL","AERIAL","WEBSTER","GAINER","CORK","TWIST","KICK","HOOKKICK","ROUNDHOUSE","TORNADO","BUTTERFLY","SWIPE","RAIZ","SCOOT","CHEAT","COMBO","LANDING","TAKEOFF","ROTATION","SPIN","FLIP","KICKS","SETUP","FLOW","POWER","HEIGHT","BALANCE","CONTROL","MOMENTUM","AXIS","TUCK","LAYOUT","STANCE","TRANSITION","POP","SWING","HYPER","FULLTWIST","BACKSIDE","FRONTSIDE","TECHNIQUE","PRECISION","SPEED","STYLE","TRAINING","FLEXIBILITY"]
+    },
+    {
+      name:"Bouldering",
+      words:["BOULDERING","CRIMP","SLOPER","PINCH","JUG","POCKET","UNDERCLING","SIDEPULL","HEELHOOK","TOEHOOK","MANTLE","DYNO","CAMPUS","CHALK","HOLDS","PROBLEM","SEND","FLASH","TOP","MATCH","FLAG","DROPKNEE","SMEAR","VOLUME","WALL","OVERHANG","SLAB","ARETE","CRUX","BETA","BRUSH","MAT","SPOTTER","ROUTE","STATIC","DYNAMIC","LOCKOFF","DEADPOINT","COMPRESSION","HANGBOARD","POWER","TENSION","COORDINATION","COMPETITION","START","FINISH","SEQUENCE","FOOTWORK","FINGERS","GRIP"]
+    },
+    {
+      name:"Climbing",
+      words:["CLIMBING","BELAY","HARNESS","CARABINER","QUICKDRAW","ROPE","ANCHOR","LEAD","TOPROPE","CRAG","ROUTE","PITCH","BOLT","CLIP","CHALK","HELMET","SLING","CAM","NUT","PROTECTION","RAPPEL","ABSEIL","ASCENDER","DESCENDER","FOOTWORK","GRIP","EDGE","JAM","CRACK","FACE","CHIMNEY","ARETE","OVERHANG","SLAB","SUMMIT","APPROACH","PARTNER","BELAYER","CLIMBER","EXPOSURE","FALL","SEND","REDPOINT","ONSIGHT","FLASH","PROJECT","CRUX","BETA","REST","LOWER"]
+    }
+  ];
+
+  const BONUS_WORDS = new Set(`
+    ACE ACT ADD AGE AIR ALL AND ANT ANY APE ARC ARM ART ASH ASK BAD BAG BAR BAT BAY BED BEE BET BIG BIN BIT BOX BOY BUS
+    CAB CAN CAP CAR CAT COW CUP CUT DAY DEN DOG DRY EAR EAT EGG END FAR FAT FEE FEW FIG FIN FIT FIX FLY FOX FUN GAP GAS
+    GEM GET GUM GUN GUY HAT HEN HER HIP HOT ICE INK JAR JET JOB JOY KEY KID KIT LEG LID LOG LOT LOW MAN MAP MAT MIX
+    MUD NET NEW NUT OAK OAR ODD OFF OIL OLD ONE OWL PAN PEN PET PIE PIG PIN POT RED ROD ROW RUN SAD SEA SKY SON SUN TAG TAN
+    TAP TEA TEN TOE TOP TOY VAN WAR WEB WET WIN YES YOU
+    ABLE ACID AGED ALSO AREA ARMY AWAY BABY BACK BALL BAND BANK BASE BATH BEAR BEAT BEEF BELL BELT BEST BIRD BLOW BLUE BOAT
+    BODY BOMB BONE BOOK BOOM BOOT BORN BOSS BOWL BULB BURN BUSH BUSY CAKE CALL CALM CARD CARE CASE CASH CAVE CHAT CHEF CITY
+    CLUB COAL COAT COLD COOK COOL DARK DATA DATE DAWN DEAL DEAR DECK DEEP DESK DIRT DISH DOOR DOWN DRAW DROP DRUM DUCK DUST
+    EASY EDGE ELSE EVEN FACE FACT FARM FAST FEAR FEED FEEL FEET FILE FILM FIRE FISH FLAG FLAT FLOW FOOD FOOT FORK FORM FROG
+    FULL GAME GATE GIFT GIRL GIVE GLAD GOAT GOLD GOOD GRAY GROW HAIR HALF HALL HAND HARD HATE HEAD HEAR HEAT HELP HERO HIDE
+    HIGH HOME HOPE HORN HUGE IDEA IRON ITEM JACK JUMP KEEP KICK KING KISS KITE KNEE LAKE LAMP LAND LATE LAZY LEFT LENS LIFE
+    LIFT LINE LINK LION LIST LIVE LOCK LONG LOOK LOVE LUCK MAIL MAIN MAKE MALE MARK MEAL MEAT MILK MIND MINT MORE MOST MOVE
+    NAME NEAR NECK NEWS NICE NOSE NOTE OPEN PAGE PAIR PARK PART PATH PEAR PICK PINK PLAY POOL POOR PURE RAIN READ REAL RING
+    ROAD ROCK ROOF ROOM ROOT ROSE ROUND SAND SAVE SEAT SEED SHOP SHOW SING SKIN SNOW SOAP SOFT SONG SOUP SPIN STEP STOP SURF
+    TAIL TALL TAPE TASK TEAM TENT TEST TIME TINY TOWN TREE TRIP TRUE TURN UNIT VIEW WALL WARM WASH WAVE WEEK WIDE WILD WIND
+    WING WIRE WISH WOOD WORD WORK YEAR
+    ANGEL BEACH BLACK BRAIN BRAVE BRICK BRIDE BRUSH CHAIN CHAIR CHESS CHILD CLEAN CLOCK CLOSE DANCE DREAM DRINK DRIVE EAGLE
+    EARTH EMPTY FAITH FLOOR FRUIT GLASS GRASS GREAT GREEN HAPPY HEART HORSE HOUSE JUICE KNIFE LIGHT LUNCH METAL MONEY MOUSE
+    MUSIC NIGHT NORTH OCEAN PAPER PARTY PEACE PIANO PLATE QUICK QUIET RADIO RIVER SHEEP SHELL SHIRT SHORE SMILE SNAKE SOLAR
+    SOUND SOUTH SPACE SPOON STAGE STONE STORM TABLE TIGER TRAIN TRUCK WATER WHEEL WHITE WORLD YOUNG
+    ANCHOR BASKET BOTTLE BRIDGE CAMERA CANDLE CARPET CASTLE CHEESE CLOUD COFFEE CORAL DRAGON FLOWER FOREST GARDEN GHOST GIANT
+    HAMMER ISLAND JUNGLE LADDER MARKET MONKEY ORANGE PARROT PLANET POCKET RABBIT ROCKET SCREEN SHADOW SILVER SQUARE TURTLE
+    WINDOW WIZARD YELLOW BANANA DOLPHIN GALAXY COMET MOON SEAHORSE JELLYFISH CHOCOLATE STRAWBERRY
+  `.trim().split(/\s+/));
+
+  // Words from every other theme are also valid offline bonus words.
+  // This substantially expands the local vocabulary without any API or internet access.
+  THEME_POOLS.forEach(theme => theme.words.forEach(word => BONUS_WORDS.add(word)));
+
+  const startScreen = document.getElementById("startScreen");
+  const gameScreen = document.getElementById("gameScreen");
+  const gridChoices = document.getElementById("gridChoices");
+  const difficultyChoices = document.getElementById("difficultyChoices");
+  const startBtn = document.getElementById("startBtn");
+
+  const boardEl = document.getElementById("board");
+  const wrapEl = document.getElementById("boardWrap");
+  const svgEl = document.getElementById("pathSvg");
+  const currentWordEl = document.getElementById("currentWord");
+  const timeoutBar = document.getElementById("timeoutBar");
+  const wordListEl = document.getElementById("wordList");
+  const foundCountEl = document.getElementById("foundCount");
+  const bonusCountEl = document.getElementById("bonusCount");
+  const bonusPointsEl = document.getElementById("bonusPoints");
+  const bonusListEl = document.getElementById("bonusList");
+  const scoreEl = document.getElementById("score");
+  const progressBar = document.getElementById("progressBar");
+  const toastEl = document.getElementById("toast");
+  const winEl = document.getElementById("win");
+  const winTextEl = document.getElementById("winText");
+  const themeNameEl = document.getElementById("themeName");
+  const modePill = document.getElementById("modePill");
+  const loadingEl = document.getElementById("loading");
+  const loadingText = document.getElementById("loadingText");
+
+  const beginnerWordsSection = document.getElementById("beginnerWordsSection");
+  const difficultyMessage = document.getElementById("difficultyMessage");
+  const hintBtn = document.getElementById("hintBtn");
+  const gameControls = document.getElementById("gameControls");
+  const sideTitle = document.getElementById("sideTitle");
+  const sideDescription = document.getElementById("sideDescription");
+  const hintNote = document.getElementById("hintNote");
+
+  let pendingGrid = 6;
+  let pendingDifficulty = "beginner";
+
+  let SIZE = 6;
+  let CELL_COUNT = 36;
+  let difficulty = "beginner";
+  let modeLocked = false;
+
+  let NEIGHBORS = [];
+  let board = [];
+  let targets = [];
+  let intendedPaths = new Map();
+  let foundPaths = new Map();
+  let foundTargets = new Set();
+  let foundBonus = new Set();
+  let selected = [];
+  let score = 0;
+  let bonusPoints = 0;
+  let resetTimer = null;
+  let toastTimer = null;
+  let hintPath = null;
+  let currentTheme = null;
+  let previousThemeName = "";
+  let evaluating = false;
+
+  function shuffle(arr){
+    const a=[...arr];
+    for(let i=a.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [a[i],a[j]]=[a[j],a[i]];
+    }
+    return a;
+  }
+
+  function setSelectedChoice(container, attr, value){
+    container.querySelectorAll(".choice").forEach(btn=>{
+      btn.classList.toggle("selected",btn.dataset[attr]===String(value));
+    });
+  }
+
+  gridChoices.addEventListener("click",e=>{
+    const btn=e.target.closest("[data-grid]");
+    if(!btn) return;
+    pendingGrid=Number(btn.dataset.grid);
+    setSelectedChoice(gridChoices,"grid",pendingGrid);
+  });
+
+  difficultyChoices.addEventListener("click",e=>{
+    const btn=e.target.closest("[data-difficulty]");
+    if(!btn) return;
+    pendingDifficulty=btn.dataset.difficulty;
+    setSelectedChoice(difficultyChoices,"difficulty",pendingDifficulty);
+  });
+
+  function configureGrid(){
+    CELL_COUNT=SIZE*SIZE;
+    boardEl.style.gridTemplateColumns=`repeat(${SIZE},1fr)`;
+    boardEl.style.gridTemplateRows=`repeat(${SIZE},1fr)`;
+    boardEl.setAttribute("aria-label",`${SIZE} by ${SIZE} word grid`);
+
+    const fontScale = SIZE===6 ? "clamp(25px,4vw,42px)" :
+                      SIZE===9 ? "clamp(18px,2.8vw,31px)" :
+                                "clamp(13px,2.1vw,24px)";
+    const radius = SIZE===6 ? "16px" : SIZE===9 ? "11px" : "8px";
+    boardEl.style.gap = SIZE===6 ? "7px" : SIZE===9 ? "5px" : "3px";
+
+    document.documentElement.style.setProperty("--dynamic-cell-font",fontScale);
+    document.documentElement.style.setProperty("--dynamic-cell-radius",radius);
+
+    NEIGHBORS=Array.from({length:CELL_COUNT},(_,i)=>neighbors(i));
+  }
+
+  function applyCellSizing(){
+    boardEl.querySelectorAll(".cell").forEach(cell=>{
+      cell.style.fontSize=getComputedStyle(document.documentElement).getPropertyValue("--dynamic-cell-font");
+      cell.style.borderRadius=getComputedStyle(document.documentElement).getPropertyValue("--dynamic-cell-radius");
+    });
+  }
+
+  function updateDifficultyUI(){
+    const label=difficulty==="beginner"?"Beginner":difficulty==="middle"?"Middle":"Hard";
+    modePill.textContent=`${SIZE}×${SIZE} · ${label}`;
+
+    beginnerWordsSection.classList.toggle("hidden",difficulty!=="beginner");
+    hintBtn.classList.toggle("hidden",difficulty!=="middle");
+
+    if(difficulty==="beginner"){
+      sideTitle.textContent="Theme words";
+      sideDescription.textContent="All target words are visible. Trace the letters in order using neighbouring cells.";
+      difficultyMessage.classList.add("hidden");
+      hintNote.textContent="Beginner mode: the full target-word list stays visible.";
+    }else if(difficulty==="middle"){
+      sideTitle.textContent="Progress";
+      sideDescription.textContent="The word list is hidden. Use a hint when you get stuck.";
+      difficultyMessage.textContent="Middle mode hides the target list. The Hint button briefly reveals one remaining word and its path.";
+      difficultyMessage.classList.remove("hidden");
+      hintNote.textContent="Hints cost 50 points. There is still no time limit.";
+    }else{
+      sideTitle.textContent="Progress";
+      sideDescription.textContent="No target list and no hints. Only the theme and your progress are shown.";
+      difficultyMessage.textContent="Hard mode: no words and no hints are available.";
+      difficultyMessage.classList.remove("hidden");
+      hintNote.textContent="Hard mode gives no help. Extra English words can still earn bonus points.";
+    }
+
+    gameControls.classList.toggle("single",difficulty!=="middle");
+  }
+
+  function rcToIndex(r,c){return r*SIZE+c}
+  function indexToRC(i){return[Math.floor(i/SIZE),i%SIZE]}
+
+  function neighbors(idx){
+    const [r,c]=indexToRC(idx);
+    const out=[];
+    for(let dr=-1;dr<=1;dr++){
+      for(let dc=-1;dc<=1;dc++){
+        if(dr===0&&dc===0)continue;
+        const nr=r+dr,nc=c+dc;
+        if(nr>=0&&nr<SIZE&&nc>=0&&nc<SIZE)out.push(rcToIndex(nr,nc));
+      }
+    }
+    return out;
+  }
+
+  function isAdjacent(a,b){return NEIGHBORS[a].includes(b)}
+
+  function samePath(a,b){
+    if(!a||!b||a.length!==b.length)return false;
+    for(let i=0;i<a.length;i++)if(a[i]!==b[i])return false;
+    return true;
+  }
+
+  function chooseTheme(){
+    const valid=THEME_POOLS.filter(t=>t.words.reduce((s,w)=>s+w.length,0)>=CELL_COUNT);
+    const candidates=valid.filter(t=>t.name!==previousThemeName);
+    currentTheme=(candidates.length?candidates:valid)[Math.floor(Math.random()*(candidates.length?candidates:valid).length)];
+    previousThemeName=currentTheme.name;
+  }
+
+  function countBounds(){
+    if(SIZE===6)return[4,7];
+    if(SIZE===9)return[8,13];
+    return[13,26];
+  }
+
+  function selectWordsExact(pool,target){
+    const [minCount,maxCount]=countBounds();
+    const words=[...new Set(pool)].filter(w=>w.length>=3&&w.length<=14);
+
+    /* Try several differently weighted DP runs. Long words receive a strong
+       preference, but roughly one third of puzzles are encouraged to include
+       a 3-letter word for variation. */
+    for(let attempt=0;attempt<18;attempt++){
+      const requireShort=Math.random()<0.35;
+      const shuffled=shuffle(words);
+      const states=new Map();
+      states.set("0|0|0",{score:0,words:[]});
+
+      for(const word of shuffled){
+        const len=word.length;
+        const snapshot=[...states.entries()];
+        for(const [key,state] of snapshot){
+          const [sumS,countS,shortS]=key.split("|");
+          const sum=Number(sumS),count=Number(countS),hasShort=shortS==="1";
+          const nextSum=sum+len,nextCount=count+1;
+          if(nextSum>target||nextCount>maxCount)continue;
+
+          const nextShort=hasShort||len===3;
+          const longBias=len*len*1.8;
+          const variationNoise=Math.random()*18;
+          const shortBonus=(requireShort&&len===3)?28:0;
+          const score=state.score+longBias+variationNoise+shortBonus;
+          const nextKey=`${nextSum}|${nextCount}|${nextShort?1:0}`;
+          const existing=states.get(nextKey);
+          if(!existing||score>existing.score){
+            states.set(nextKey,{score,words:[...state.words,word]});
+          }
+        }
+      }
+
+      const candidates=[];
+      for(let count=minCount;count<=maxCount;count++){
+        for(const shortFlag of [0,1]){
+          if(requireShort&&shortFlag===0)continue;
+          const state=states.get(`${target}|${count}|${shortFlag}`);
+          if(state)candidates.push(state);
+        }
+      }
+
+      if(candidates.length){
+        candidates.sort((a,b)=>b.score-a.score);
+        const top=candidates.slice(0,Math.min(5,candidates.length));
+        return top[Math.floor(Math.random()*top.length)].words;
+      }
+    }
+
+    throw new Error(`Could not select words totalling ${target} letters.`);
+  }
+
+  function countUnvisitedNeighbors(idx,visited){
+    let count=0;
+    for(const n of NEIGHBORS[idx])if(!visited[n])count++;
+    return count;
+  }
+
+  function unvisitedConnected(visited){
+    let start=-1,remaining=0;
+    for(let i=0;i<CELL_COUNT;i++){
+      if(!visited[i]){remaining++;if(start===-1)start=i}
+    }
+    if(remaining<=1)return true;
+    const stack=[start],seen=new Set([start]);
+    while(stack.length){
+      const cur=stack.pop();
+      for(const n of NEIGHBORS[cur]){
+        if(!visited[n]&&!seen.has(n)){seen.add(n);stack.push(n)}
+      }
+    }
+    return seen.size===remaining;
+  }
+
+  function hasStrandedCells(visited){
+    let remaining=0;
+    for(let i=0;i<CELL_COUNT;i++)if(!visited[i])remaining++;
+    if(remaining<=1)return false;
+    for(let i=0;i<CELL_COUNT;i++){
+      if(visited[i])continue;
+      if(countUnvisitedNeighbors(i,visited)===0)return true;
+    }
+    return false;
+  }
+
+  function pathMetrics(path){
+    let turns=0,diagonals=0;
+    for(let i=1;i<path.length;i++){
+      const [pr,pc]=indexToRC(path[i-1]);
+      const [cr,cc]=indexToRC(path[i]);
+      const dr=cr-pr,dc=cc-pc;
+      if(Math.abs(dr)===1&&Math.abs(dc)===1)diagonals++;
+      if(i>=2){
+        const [ar,ac]=indexToRC(path[i-2]);
+        if((pr-ar)!==dr||(pc-ac)!==dc)turns++;
+      }
+    }
+    return{turns,diagonals,score:turns*1.5+diagonals};
+  }
+
+  function generateExoticHamiltonianPath(){
+    let best=null;
+    const attempts=SIZE===12?28:45;
+
+    for(let attempt=0;attempt<attempts;attempt++){
+      const start=Math.floor(Math.random()*CELL_COUNT);
+      const visited=new Array(CELL_COUNT).fill(false);
+      const path=[start];
+      visited[start]=true;
+
+      function search(current,previous,depth){
+        if(depth===CELL_COUNT)return true;
+
+        const candidates=NEIGHBORS[current]
+          .filter(n=>!visited[n])
+          .map(n=>{
+            const [cr,cc]=indexToRC(current);
+            const [nr,nc]=indexToRC(n);
+            const dr=nr-cr,dc=nc-cc;
+
+            let straightPenalty=0;
+            if(previous!==null){
+              const [pr,pc]=indexToRC(previous);
+              if((cr-pr)===dr&&(cc-pc)===dc)straightPenalty=2.6;
+            }
+
+            const diagonalBonus=(Math.abs(dr)===1&&Math.abs(dc)===1)?-0.7:0;
+            const degree=countUnvisitedNeighbors(n,visited);
+            const randomNoise=Math.random()*.5;
+            return{n,score:degree+straightPenalty+diagonalBonus+randomNoise};
+          })
+          .sort((a,b)=>a.score-b.score)
+          .map(x=>x.n);
+
+        for(const next of candidates){
+          visited[next]=true;
+          path.push(next);
+
+          let ok=!hasStrandedCells(visited);
+          if(ok&&depth%3===0)ok=unvisitedConnected(visited);
+
+          if(ok&&search(next,current,depth+1))return true;
+          path.pop();
+          visited[next]=false;
+        }
+        return false;
+      }
+
+      if(search(start,null,1)){
+        const metrics=pathMetrics(path);
+        if(!best||metrics.score>best.metrics.score){
+          best={path:[...path],metrics};
+        }
+
+        const minTurns=Math.floor((CELL_COUNT-2)*.42);
+        const minDiag=Math.floor((CELL_COUNT-1)*.18);
+        if(metrics.turns>=minTurns&&metrics.diagonals>=minDiag)return path;
+      }
+    }
+
+    if(best)return best.path;
+    throw new Error("Could not generate a full complex path.");
+  }
+
+  function countWordPaths(grid,word,limit=2){
+    let count=0;
+    const used=new Array(CELL_COUNT).fill(false);
+
+    function dfs(idx,pos){
+      if(count>=limit)return;
+
+      if(pos===word.length-1){
+        count++;
+        return;
+      }
+
+      used[idx]=true;
+      const nextLetter=word[pos+1];
+
+      for(const n of NEIGHBORS[idx]){
+        if(used[n])continue;
+        if(grid[n]!==nextLetter)continue;
+        dfs(n,pos+1);
+        if(count>=limit)break;
+      }
+
+      used[idx]=false;
+    }
+
+    for(let i=0;i<CELL_COUNT;i++){
+      if(grid[i]!==word[0])continue;
+      dfs(i,0);
+      if(count>=limit)break;
+    }
+
+    return count;
+  }
+
+  function duplicatePathScore(grid,words){
+    let duplicates=0;
+
+    for(const word of words){
+      const count=countWordPaths(grid,word,2);
+      if(count>1)duplicates+=(count-1);
+    }
+
+    return duplicates;
+  }
+
+  function makeBoardCandidate(selectedWords){
+    const masterPath=generateExoticHamiltonianPath();
+    const orderedWords=shuffle(selectedWords);
+    const grid=new Array(CELL_COUNT).fill("");
+    const paths=new Map();
+
+    let offset=0;
+
+    for(const word of orderedWords){
+      const segment=masterPath.slice(offset,offset+word.length);
+      const reverse=Math.random()<.5;
+
+      if(reverse){
+        [...word].reverse().forEach((letter,k)=>grid[segment[k]]=letter);
+        paths.set(word,[...segment].reverse());
+      }else{
+        [...word].forEach((letter,k)=>grid[segment[k]]=letter);
+        paths.set(word,[...segment]);
+      }
+
+      offset+=word.length;
+    }
+
+    if(grid.some(x=>!x))throw new Error("Unfilled grid cell.");
+
+    return{
+      grid,
+      paths,
+      duplicateScore:duplicatePathScore(grid,selectedWords)
+    };
+  }
+
+  function generateBoard(){
+    chooseTheme();
+
+    /*
+      Important:
+      A target word should ideally have only ONE possible spelling path in
+      the finished board. The generator therefore checks the complete board
+      after creation and regenerates it when a target can be traced in more
+      than one way.
+
+      Short words are naturally more likely to occur accidentally, especially
+      on 9×9 and 12×12 boards, so after a bounded number of attempts we use
+      the board with the fewest duplicates. Recognition is still forgiving:
+      ANY correctly spelled target path is accepted by the game.
+    */
+    const boardAttempts=SIZE===6?24:SIZE===9?16:10;
+
+    let best=null;
+
+    for(let attempt=0;attempt<boardAttempts;attempt++){
+      const selectedWords=selectWordsExact(currentTheme.words,CELL_COUNT);
+      const candidate=makeBoardCandidate(selectedWords);
+
+      if(
+        !best ||
+        candidate.duplicateScore<best.duplicateScore
+      ){
+        best={
+          ...candidate,
+          selectedWords
+        };
+      }
+
+      if(candidate.duplicateScore===0){
+        break;
+      }
+    }
+
+    if(!best)throw new Error("Could not generate puzzle.");
+
+    board=best.grid;
+    targets=shuffle(best.selectedWords);
+    intendedPaths=best.paths;
+  }
+  function renderBoard(){
+    boardEl.innerHTML="";
+    board.forEach((letter,idx)=>{
+      const cell=document.createElement("button");
+      cell.type="button";
+      cell.className="cell";
+      cell.textContent=letter;
+      cell.dataset.index=idx;
+      cell.setAttribute("aria-label",`Letter ${letter}`);
+      boardEl.appendChild(cell);
+    });
+    applyCellSizing();
+
+    themeNameEl.textContent=currentTheme.name;
+    wordListEl.innerHTML="";
+    targets.forEach(word=>{
+      const chip=document.createElement("div");
+      chip.className="word-chip";
+      chip.id="word-"+word;
+      chip.textContent=word;
+      wordListEl.appendChild(chip);
+    });
+
+    renderBonusList();
+    updateHUD();
+    requestAnimationFrame(drawPaths);
+  }
+
+  function updateHUD(){
+    foundCountEl.textContent=`${foundTargets.size}/${targets.length}`;
+    bonusCountEl.textContent=foundBonus.size;
+    bonusPointsEl.textContent=`+${bonusPoints} pts`;
+    scoreEl.textContent=score;
+    progressBar.style.width=`${(foundTargets.size/targets.length)*100}%`;
+  }
+
+  function selectedWord(){return selected.map(i=>board[i]).join("")}
+
+  function resetSelection(){
+    clearTimeout(resetTimer);
+    resetTimer=null;
+    evaluating=false;
+    timeoutBar.style.transition="none";
+    timeoutBar.style.width="0%";
+    selected=[];
+    updateSelectionUI();
+  }
+
+  function startAutoReset(){
+    clearTimeout(resetTimer);
+    timeoutBar.style.transition="none";
+    timeoutBar.style.width="100%";
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      timeoutBar.style.transition=`width ${RESET_DELAY}ms linear`;
+      timeoutBar.style.width="0%";
+    }));
+    resetTimer=setTimeout(evaluateAtTimeout,RESET_DELAY);
+  }
+
+  function updateSelectionUI(){
+    boardEl.querySelectorAll(".cell.active").forEach(el=>el.classList.remove("active"));
+    selected.forEach(i=>boardEl.children[i]?.classList.add("active"));
+    currentWordEl.classList.remove("target-result","bonus-result","no-result");
+    currentWordEl.textContent=selectedWord()||"Click a letter to start";
+    drawPaths();
+  }
+
+  function cellCenter(idx){
+    const cell=boardEl.children[idx];
+    const cr=cell.getBoundingClientRect(),wr=wrapEl.getBoundingClientRect();
+    return{x:cr.left-wr.left+cr.width/2,y:cr.top-wr.top+cr.height/2};
+  }
+
+  function makePolyline(points,stroke,opacity=1){
+    if(!points.length)return null;
+    const ns="http://www.w3.org/2000/svg";
+    const p=document.createElementNS(ns,"polyline");
+    p.setAttribute("points",points.map(pt=>`${pt.x},${pt.y}`).join(" "));
+    p.setAttribute("fill","none");
+    p.setAttribute("stroke",stroke);
+    const cell=boardEl.children[0]?.getBoundingClientRect();
+    const ratio=SIZE===6?.65:SIZE===9?.62:.60;
+    p.setAttribute("stroke-width",Math.max(16,(cell?.width||50)*ratio));
+    p.setAttribute("stroke-linecap","round");
+    p.setAttribute("stroke-linejoin","round");
+    p.setAttribute("opacity",opacity);
+    return p;
+  }
+
+  function drawPaths(){
+    while(svgEl.firstChild)svgEl.removeChild(svgEl.firstChild);
+
+    let n=0;
+    foundTargets.forEach(word=>{
+      const path=foundPaths.get(word)||intendedPaths.get(word);
+      if(!path)return;
+      const poly=makePolyline(path.map(cellCenter),n%2===0?"#8dcd56":"#59c9c4",.36);
+      n++;
+      if(poly)svgEl.appendChild(poly);
+    });
+
+    if(hintPath){
+      const poly=makePolyline(hintPath.map(cellCenter),"#e8b34c",.30);
+      if(poly)svgEl.appendChild(poly);
+    }
+
+    /* Every active selection gets exactly the same trail, regardless of
+       whether it will later be valid, invalid, target, or bonus. */
+    if(selected.length){
+      const poly=makePolyline(selected.map(cellCenter),"#59c9c4",.72);
+      if(poly)svgEl.appendChild(poly);
+    }
+  }
+
+  function findTargetFromSelection(){
+    const word=selectedWord();
+
+    /*
+      A theme word is recognised by its spelling, not by one hidden
+      "official" route. This prevents the frustrating case where the player
+      writes the correct word but chooses another equally valid last letter.
+      The generator still tries to make each target appear only once.
+    */
+    if(!targets.includes(word))return null;
+    if(foundTargets.has(word))return null;
+
+    return word;
+  }
+
+  function evaluateAtTimeout(){
+    if(evaluating||!selected.length)return;
+    evaluating=true;
+
+    const word=selectedWord();
+    const targetWord=findTargetFromSelection();
+
+    if(targetWord){
+      foundTargets.add(targetWord);
+      foundPaths.set(targetWord,[...selected]);
+      const pts=targetWord.length*TARGET_POINTS_PER_LETTER;
+      score+=pts;
+      selected.forEach(i=>boardEl.children[i]?.classList.add("found"));
+      document.getElementById("word-"+targetWord)?.classList.add("found");
+      currentWordEl.classList.add("target-result");
+      currentWordEl.textContent=`${targetWord} +${pts}`;
+      toast(`Theme word: ${targetWord} +${pts}`);
+      updateHUD();
+
+      const completed=foundTargets.size===targets.length;
+      setTimeout(()=>{
+        resetSelection();
+        if(completed)showWin();
+      },RESULT_DISPLAY_MS);
+      return;
+    }
+
+    if(targets.includes(word)&&foundTargets.has(word)){
+      currentWordEl.classList.add("target-result");
+      currentWordEl.textContent=`${word} · already found`;
+      toast(`${word} already found`);
+      setTimeout(resetSelection,RESULT_DISPLAY_MS);
+      return;
+    }
+
+    if(word.length>=MIN_BONUS_LENGTH&&BONUS_WORDS.has(word)&&!targets.includes(word)){
+      if(!foundBonus.has(word)){
+        foundBonus.add(word);
+        const pts=word.length*BONUS_POINTS_PER_LETTER;
+        bonusPoints+=pts;
+        score+=pts;
+        currentWordEl.classList.add("bonus-result");
+        currentWordEl.textContent=`BONUS: ${word} +${pts}`;
+        toast(`Bonus word: ${word} +${pts}`,"bonus");
+        renderBonusList();
+        updateHUD();
+      }else{
+        currentWordEl.classList.add("bonus-result");
+        currentWordEl.textContent=`BONUS: ${word}`;
+        toast(`${word} already scored`);
+      }
+      setTimeout(resetSelection,RESULT_DISPLAY_MS);
+      return;
+    }
+
+    currentWordEl.classList.add("no-result");
+    currentWordEl.textContent=word||"No word";
+    setTimeout(resetSelection,RESULT_DISPLAY_MS);
+  }
+
+  function clickCell(idx){
+    if(evaluating)return;
+
+    if(selected.length===0){
+      selected=[idx];
+      updateSelectionUI();
+      startAutoReset();
+      return;
+    }
+
+    const last=selected[selected.length-1];
+
+    if(idx===last){
+      startAutoReset();
+      return;
+    }
+
+    if(selected.length>=2&&idx===selected[selected.length-2]){
+      selected.pop();
+      updateSelectionUI();
+      startAutoReset();
+      return;
+    }
+
+    if(!isAdjacent(last,idx)||selected.includes(idx)){
+      selected=[idx];
+      updateSelectionUI();
+      startAutoReset();
+      return;
+    }
+
+    selected.push(idx);
+    updateSelectionUI();
+    startAutoReset();
+  }
+
+  boardEl.addEventListener("click",e=>{
+    const cell=e.target.closest(".cell");
+    if(!cell)return;
+    clickCell(Number(cell.dataset.index));
+  });
+
+  function renderBonusList(){
+    bonusListEl.innerHTML="";
+    const words=[...foundBonus];
+    if(!words.length){
+      const empty=document.createElement("span");
+      empty.style.cssText="font-size:12px;color:#879087";
+      empty.textContent="Extra English words score bonus points.";
+      bonusListEl.appendChild(empty);
+      return;
+    }
+    words.slice(-8).reverse().forEach(word=>{
+      const chip=document.createElement("span");
+      chip.className="bonus-chip";
+      chip.textContent=word;
+      bonusListEl.appendChild(chip);
+    });
+  }
+
+  function toast(msg,type="normal"){
+    clearTimeout(toastTimer);
+    toastEl.textContent=msg;
+    toastEl.classList.toggle("bonus-toast",type==="bonus");
+    toastEl.classList.add("show");
+    toastTimer=setTimeout(()=>toastEl.classList.remove("show"),1500);
+  }
+
+  function showHint(){
+    if(difficulty!=="middle")return;
+    const remaining=targets.filter(w=>!foundTargets.has(w));
+    if(!remaining.length)return;
+
+    const word=remaining[Math.floor(Math.random()*remaining.length)];
+    hintPath=intendedPaths.get(word);
+    drawPaths();
+    toast(`Hint: ${word}`);
+    score=Math.max(0,score-50);
+    updateHUD();
+
+    setTimeout(()=>{
+      hintPath=null;
+      drawPaths();
+    },1300);
+  }
+
+  function showWin(){
+    clearTimeout(resetTimer);
+    winTextEl.textContent=`You completed "${currentTheme.name}" in ${SIZE}×${SIZE} ${difficulty} mode. Score: ${score}, including ${bonusPoints} bonus points.`;
+    winEl.classList.add("show");
+  }
+
+  async function newPuzzle(){
+    loadingText.textContent=`Building a ${SIZE}×${SIZE} ${difficulty} puzzle…`;
+    loadingEl.classList.add("show");
+    await new Promise(resolve=>setTimeout(resolve,20));
+
+    foundTargets=new Set();
+    foundPaths=new Map();
+    foundBonus=new Set();
+    selected=[];
+    score=0;
+    bonusPoints=0;
+    hintPath=null;
+    evaluating=false;
+    winEl.classList.remove("show");
+    clearTimeout(resetTimer);
+
+    try{
+      generateBoard();
+      renderBoard();
+      resetSelection();
+    }catch(err){
+      console.error(err);
+      loadingEl.classList.remove("show");
+      toast("Generation failed, retrying…");
+      setTimeout(newPuzzle,60);
+      return;
+    }
+
+    loadingEl.classList.remove("show");
+  }
+
+  async function startGame(){
+    SIZE=pendingGrid;
+    difficulty=pendingDifficulty;
+    modeLocked=true;
+    configureGrid();
+    updateDifficultyUI();
+    startScreen.classList.add("hidden");
+    gameScreen.classList.remove("hidden");
+    await newPuzzle();
+  }
+
+  function changeMode(){
+    clearTimeout(resetTimer);
+    winEl.classList.remove("show");
+    gameScreen.classList.add("hidden");
+    startScreen.classList.remove("hidden");
+    modeLocked=false;
+  }
+
+  startBtn.addEventListener("click",startGame);
+  hintBtn.addEventListener("click",showHint);
+  document.getElementById("newBtn").addEventListener("click",newPuzzle);
+  document.getElementById("playAgainBtn").addEventListener("click",newPuzzle);
+  document.getElementById("changeModeBtn").addEventListener("click",changeMode);
+  window.addEventListener("resize",drawPaths);
+})();
+</script>
+</body>
+</html>
