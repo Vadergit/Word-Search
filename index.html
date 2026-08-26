@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Word Path – Grid & Difficulty</title>
+  <title>Anitas Word Path</title>
   <style>
     :root{
       --bg:#f4f6f2;
@@ -278,6 +278,7 @@
     }
     .toast.show{opacity:1;transform:translate(-50%,0)}
     .toast.bonus-toast{background:#6c5628}
+    .toast.hint-toast{background:#3f3418}
     .loading{
       position:fixed;inset:0;background:rgba(244,246,242,.92);display:none;align-items:center;justify-content:center;
       z-index:200;backdrop-filter:blur(4px);
@@ -364,7 +365,7 @@
   <section id="gameScreen" class="hidden">
     <div class="topbar">
       <div>
-        <h1 class="game-title">Word Path</h1>
+        <h1 class="game-title">Anitas Word Path</h1>
         <p class="subtitle">No time limit. Recognition happens only after the selection pause expires. Correct target spellings are accepted even if more than one valid route exists.</p>
       </div>
       <div class="stats">
@@ -1132,7 +1133,7 @@
     });
 
     if(hintPath){
-      const poly=makePolyline(hintPath.map(cellCenter),"#e8b34c",.30);
+      const poly=makePolyline(hintPath.map(cellCenter),"#9a6a00",.58);
       if(poly)svgEl.appendChild(poly);
     }
 
@@ -1279,12 +1280,13 @@
     });
   }
 
-  function toast(msg,type="normal"){
+  function toast(msg,type="normal",duration=1500){
     clearTimeout(toastTimer);
     toastEl.textContent=msg;
     toastEl.classList.toggle("bonus-toast",type==="bonus");
+    toastEl.classList.toggle("hint-toast",type==="hint");
     toastEl.classList.add("show");
-    toastTimer=setTimeout(()=>toastEl.classList.remove("show"),1500);
+    toastTimer=setTimeout(()=>toastEl.classList.remove("show"),duration);
   }
 
   function showHint(){
@@ -1295,14 +1297,15 @@
     const word=remaining[Math.floor(Math.random()*remaining.length)];
     hintPath=intendedPaths.get(word);
     drawPaths();
-    toast(`Hint: ${word}`);
+    const HINT_DISPLAY_MS=5000;
+    toast(`Hint: ${word}`,"hint",HINT_DISPLAY_MS);
     score=Math.max(0,score-50);
     updateHUD();
 
     setTimeout(()=>{
       hintPath=null;
       drawPaths();
-    },1300);
+    },HINT_DISPLAY_MS);
   }
 
   function showWin(){
