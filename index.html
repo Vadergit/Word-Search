@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Anitas Word Path · v1.0.0</title>
+  <title>Anitas Word Path · v1.1.0</title>
   <style>
     :root{
       --bg:#f4f6f2;
@@ -396,7 +396,7 @@
 <body>
 <main class="app">
   <section class="login-screen" id="loginScreen">
-    <div class="start-kicker">Local profiles · v1.0.0</div>
+    <div class="start-kicker">Local profiles · v1.1.0</div>
     <h1>Anitas Word Path</h1>
     <p>Choose your profile and enter the local PIN. Progress stays only in this browser and is never uploaded.</p>
     <div class="profile-grid" id="profileGrid">
@@ -413,7 +413,7 @@
 
   <section class="start-screen hidden" id="startScreen">
     <div class="player-bar"><div><strong id="startPlayerName">Player</strong><span>Local profile</span></div><div style="display:flex;gap:7px;flex-wrap:wrap"><a class="btn secondary" href="stats.html">Statistics</a><button class="btn secondary" id="switchProfileStartBtn" type="button">Switch player</button></div></div>
-    <div class="start-kicker">Word game suite · v1.0.0</div>
+    <div class="start-kicker">Word game suite · v1.1.0</div>
     <h1>Anitas Word Path</h1>
     <p class="start-intro">
       Choose the grid size and difficulty before starting. The game now includes many more themes and a much larger offline word pool. Once the run begins, every following puzzle keeps the same mode until you choose “Change mode”.
@@ -605,7 +605,7 @@
   </div>
 </div>
 
-<script src="themes.js?v=1.0.0"></script>
+<script src="themes.js?v=1.1.0"></script>
 <script src="words.js"></script>
 <script>
 (() => {
@@ -727,7 +727,8 @@
 
   let pendingGameType = localStorage.getItem("anitasWordPathPreferredGameType")==="3d"?"3d":"2d";
   let pendingGrid = 6;
-  let pendingDifficulty = "beginner";
+  const savedDifficulty=localStorage.getItem("anitasWordPathPreferredDifficulty");
+  let pendingDifficulty = ["beginner","middle","hard"].includes(savedDifficulty)?savedDifficulty:"beginner";
   let pendingGameMode = "classic";
 
   let SIZE = 6;
@@ -1012,10 +1013,24 @@
   function updateGameTypeUI(){
     const cube=pendingGameType==="3d";
     gridSetting.classList.toggle("hidden",cube);
-    difficultySetting.classList.toggle("hidden",cube);
+    difficultySetting.classList.remove("hidden");
     modeSetting.classList.toggle("hidden",cube);
-    startBtn.textContent=cube?"Start 3D cube":"Start 2D game";
+    startBtn.textContent=cube?`Start 3D cube · ${pendingDifficulty}`:"Start 2D game";
     setSelectedChoice(gameTypeChoices,"gameType",pendingGameType);
+    setSelectedChoice(difficultyChoices,"difficulty",pendingDifficulty);
+
+    const beginnerCopy=difficultyChoices.querySelector('[data-difficulty="beginner"] span');
+    const middleCopy=difficultyChoices.querySelector('[data-difficulty="middle"] span');
+    const hardCopy=difficultyChoices.querySelector('[data-difficulty="hard"] span');
+    if(cube){
+      if(beginnerCopy)beginnerCopy.textContent="Target list + hints · shorter, easier cross-face routes.";
+      if(middleCopy)middleCopy.textContent="Hidden target list + hints · more cross-face routes.";
+      if(hardCopy)hardCopy.textContent="No target list or hints · longer, more complex routes.";
+    }else{
+      if(beginnerCopy)beginnerCopy.textContent="Full word list + hints.";
+      if(middleCopy)middleCopy.textContent="No word list, but hints are available.";
+      if(hardCopy)hardCopy.textContent="No word list and no hints.";
+    }
     updatePausedResumeButton();
   }
 
@@ -1038,7 +1053,9 @@
     const btn=e.target.closest("[data-difficulty]");
     if(!btn) return;
     pendingDifficulty=btn.dataset.difficulty;
+    try{localStorage.setItem("anitasWordPathPreferredDifficulty",pendingDifficulty)}catch(_){}
     setSelectedChoice(difficultyChoices,"difficulty",pendingDifficulty);
+    updateGameTypeUI();
   });
 
   gameModeChoices.addEventListener("click",e=>{
@@ -2146,6 +2163,10 @@
 
   async function startGame(){
     if(pendingGameType==="3d"){
+      try{
+        localStorage.setItem("anitasWordCubeDifficulty",pendingDifficulty);
+        localStorage.setItem("anitasWordPathPreferredDifficulty",pendingDifficulty);
+      }catch(_){}
       window.location.href="cube/";
       return;
     }

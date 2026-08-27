@@ -168,3 +168,8 @@ html[data-theme="light"] .win{background:rgba(228,239,233,.82)}
 html[data-theme="light"] .win-card{background:#ffffff;box-shadow:0 30px 90px rgba(30,70,55,.20)}
 
 .profile-badge{display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:999px;padding:9px 12px;background:var(--panel-soft);color:var(--text);font-size:12px;font-weight:900;white-space:nowrap}
+
+.difficulty-badge{display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(69,205,176,.35);border-radius:999px;padding:9px 12px;background:rgba(69,205,176,.10);color:var(--text);font-size:12px;font-weight:900;white-space:nowrap}
+.difficulty-message{margin:0 0 12px;padding:9px 10px;border:1px solid var(--line);border-radius:12px;background:var(--panel-2);color:var(--muted);font-size:10px;line-height:1.45}
+.difficulty-target-message{grid-column:1/-1;padding:18px 12px;border:1px dashed var(--line-strong);border-radius:13px;text-align:center;color:var(--muted);font-size:11px;line-height:1.5;background:var(--panel-2)}
+.hidden{display:none!important}

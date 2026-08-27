@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const APP_VERSION = '1.0.0';
+  const APP_VERSION = '1.1.0';
   const GRID = 3;
   const FACE_NAMES = ['front','right','back','left','top','bottom'];
   const TILE_COUNT = FACE_NAMES.length * GRID * GRID;
@@ -19,6 +19,14 @@
   const WORD_THEME_WORD_COUNT = WORD_THEMES.reduce((sum,theme)=>sum+new Set(theme.words).size,0);
   const LETTER_POOL = 'EEEEEEEEEEEEAAAAAAAAAIIIIIIIIOOOOOOOONNNNNNRRRRRRTTTTTTLLLLSSSSUUUUDDDDGGGBBCCMMPPFFHHVVWWYYKJXQZ';
   const ENGLISH_WORDS = window.ANITAS_ENGLISH_WORDS instanceof Set ? window.ANITAS_ENGLISH_WORDS : new Set();
+  const CUBE_DIFFICULTY_KEY='anitasWordCubeDifficulty';
+  const CUBE_DIFFICULTIES={
+    beginner:{label:'Beginner',minLen:3,maxLen:8,counts:[10,11,12,9,8],minCross:2,maxCross:4},
+    middle:{label:'Middle',minLen:4,maxLen:11,counts:[7,8,9,10,6,11],minCross:3,maxCross:6},
+    hard:{label:'Hard',minLen:5,maxLen:14,counts:[5,6,7,8,9],minCross:4,maxCross:99}
+  };
+  const storedCubeDifficulty=localStorage.getItem(CUBE_DIFFICULTY_KEY)||localStorage.getItem('anitasWordPathPreferredDifficulty')||'beginner';
+  let cubeDifficulty=CUBE_DIFFICULTIES[storedCubeDifficulty]?storedCubeDifficulty:'beginner';
   const LOCAL_PROFILE_NAMES = new Set(['Anita','Dario']);
   const activeProfileName = localStorage.getItem('anitasWordPathActiveProfile') || '';
   if(!LOCAL_PROFILE_NAMES.has(activeProfileName)){
@@ -84,6 +92,9 @@
   const nextCubeBtn = document.getElementById('nextCubeBtn');
   const wordThemeNameEl = document.getElementById('wordThemeName');
   const cubePlayerNameEl = document.getElementById('cubePlayerName');
+  const cubeDifficultyBadge = document.getElementById('cubeDifficultyBadge');
+  const difficultyMessageEl = document.getElementById('difficultyMessage');
+  const hintBtn = document.getElementById('hintBtn');
   const switchProfileBtn = document.getElementById('switchProfileBtn');
 
   const nodes = [];
@@ -124,23 +135,26 @@
   let evaluating = false;
   const flashUntil = new Map();
   const THEME_KEY = 'anitasWordCubeTheme';
-  let currentTheme = 'dark';
+  let currentTheme = 'light';
   let activeWordTheme = WORD_THEMES[0];
   let previousWordThemeName = '';
   let cubePuzzleCode = '';
   let cubePuzzleFingerprint = '';
   let cubeRecorded = false;
+  let hintNodes = new Set();
+  let hintTimer = null;
+  let cubeHints = 0;
 
   const CANVAS_THEME = {
     dark:{
       face:'#2d3331',core:'#252a29',faceStroke:'rgba(101,223,195,.24)',tile:'#e9eee8',tileText:'#10201a',
       tileStroke:'rgba(9,27,21,.24)',selected:'#65dfc3',selectedStroke:'#d8fff4',
-      solved:'#aee17f',solvedStroke:'#d8ffb9',invalid:'#ef9f96',pathUnder:'rgba(4,14,11,.88)'
+      solved:'#aee17f',solvedStroke:'#d8ffb9',hint:'#efca6b',hintStroke:'#fff0b3',invalid:'#ef9f96',pathUnder:'rgba(4,14,11,.88)'
     },
     light:{
       face:'#555d5a',core:'#414744',faceStroke:'rgba(33,111,90,.30)',tile:'#fbfdfa',tileText:'#173028',
       tileStroke:'rgba(23,48,40,.24)',selected:'#55d7b9',selectedStroke:'#147e67',
-      solved:'#b9e58f',solvedStroke:'#5d9634',invalid:'#ef9f96',pathUnder:'rgba(255,255,255,.96)'
+      solved:'#b9e58f',solvedStroke:'#5d9634',hint:'#f1cf70',hintStroke:'#9a7315',invalid:'#ef9f96',pathUnder:'rgba(255,255,255,.96)'
     }
   };
 
@@ -280,25 +294,34 @@
   }
 
   function chooseCoverWords(pool,total=TILE_COUNT){
+    const cfg=CUBE_DIFFICULTIES[cubeDifficulty];
     const recent=new Set(playerStats.recentWords||[]);
-    const words=shuffle([...new Set(pool)].filter(w=>w.length>=3 && w.length<=14)).sort((a,b)=>Number(recent.has(a))-Number(recent.has(b)));
-    const states=new Map([[`0:0`,[]]]);
-    for(const word of words){
-      const snapshot=[...states.entries()];
-      for(const [key,list] of snapshot){
-        const [sum,count]=key.split(':').map(Number);
-        if(count>=10) continue;
-        const next=sum+word.length;
-        if(next>total) continue;
-        const nextKey=`${next}:${count+1}`;
-        if(!states.has(nextKey)) states.set(nextKey,[...list,word]);
+
+    function solve(minLen,maxLen,counts){
+      const words=shuffle([...new Set(pool)].filter(w=>w.length>=minLen && w.length<=maxLen))
+        .sort((a,b)=>Number(recent.has(a))-Number(recent.has(b)));
+      const states=new Map([[`0:0`,[]]]);
+      for(const word of words){
+        const snapshot=[...states.entries()];
+        for(const [key,list] of snapshot){
+          const [sum,count]=key.split(':').map(Number);
+          if(count>=12) continue;
+          const next=sum+word.length;
+          if(next>total) continue;
+          const nextKey=`${next}:${count+1}`;
+          if(!states.has(nextKey)) states.set(nextKey,[...list,word]);
+        }
       }
+      for(const count of counts){
+        const hit=states.get(`${total}:${count}`);
+        if(hit)return shuffle(hit);
+      }
+      return null;
     }
-    for(const count of [7,8,9,10,6,11,5,12,4]){
-      const hit=states.get(`${total}:${count}`);
-      if(hit) return shuffle(hit);
-    }
-    return null;
+
+    return solve(cfg.minLen,cfg.maxLen,cfg.counts)
+      || solve(3,14,cfg.counts)
+      || solve(3,14,[7,8,9,10,6,11,5,12,4]);
   }
 
   function buildFullCoverCandidate(words,baseRoute){
@@ -381,7 +404,7 @@
     const available=availableWordThemes();
     const alternatives=available.filter(theme=>theme.name!==previousWordThemeName);
     const themeOrder=shuffle(alternatives.length?alternatives:available);
-    const maxThemes=Math.min(4,themeOrder.length);
+    const maxThemes=Math.min(6,themeOrder.length);
 
     for(let themeIndex=0;themeIndex<maxThemes;themeIndex++){
       const theme=themeOrder[themeIndex];
@@ -391,8 +414,12 @@
         const candidate=buildFullCoverCandidate(words,route);
         if(!candidate) continue;
         const {working,paths}=candidate;
-        const crossFaceCount=words.filter(word=>new Set(paths.get(word).map(id=>nodeById.get(id).face)).size>1).length;
-        if(crossFaceCount<3) continue;
+        const cfg=CUBE_DIFFICULTIES[cubeDifficulty];
+        const faceCounts=words.map(word=>new Set(paths.get(word).map(id=>nodeById.get(id).face)).size);
+        const crossFaceCount=faceCounts.filter(count=>count>1).length;
+        const crossBurden=faceCounts.reduce((sum,count)=>sum+Math.max(0,count-1),0);
+        if(crossFaceCount<cfg.minCross || crossFaceCount>cfg.maxCross) continue;
+        if(cubeDifficulty==='hard' && crossBurden<4) continue;
         if(!validateUniqueTargets(words,paths,working)) continue;
         board=working;
         targets=words;
@@ -485,6 +512,7 @@
   function tileFill(id){
     const p=canvasTheme();
     if(selected.includes(id)) return p.selected;
+    if(hintNodes.has(id)) return p.hint;
     if(solvedNodes.has(id)) return p.solved;
     if(flashUntil.get(id)>performance.now()) return p.invalid;
     return p.tile;
@@ -504,8 +532,9 @@
     const p=canvasTheme(),ordered=[...renderedTiles].sort((a,b)=>a.depth-b.depth);
     for(const tile of ordered){
       beginPoly(tile.quad); ctx.fillStyle=tileFill(tile.id); ctx.fill();
-      ctx.lineWidth=selected.includes(tile.id)?3.5:1.3;
-      ctx.strokeStyle=selected.includes(tile.id)?p.selectedStroke:solvedNodes.has(tile.id)?p.solvedStroke:p.tileStroke; ctx.stroke();
+      const hinted=hintNodes.has(tile.id);
+      ctx.lineWidth=selected.includes(tile.id)?3.5:hinted?3:1.3;
+      ctx.strokeStyle=selected.includes(tile.id)?p.selectedStroke:hinted?p.hintStroke:solvedNodes.has(tile.id)?p.solvedStroke:p.tileStroke; ctx.stroke();
     }
   }
 
@@ -623,17 +652,17 @@
 
   function makeCubeFingerprint(){
     const targetKey=[...targets].sort().join(',');
-    return `CUBE-${activeWordTheme.name}-${hashText(`${board.join('')}|${targetKey}`).toString(36).toUpperCase()}`;
+    return `CUBE-${cubeDifficulty}-${activeWordTheme.name}-${hashText(`${board.join('')}|${targetKey}`).toString(36).toUpperCase()}`;
   }
 
   function newPuzzle(){
-    stopSelectionTimer(); selected=[]; foundTargets=new Set(); foundBonus=new Set(); foundPathByWord=new Map(); solvedNodes=new Set(); cubeCleared=false;
-    score=0; bonusScore=0; crossFaceFinds=0; evaluating=false; cubeRecorded=false; winEl.classList.remove('show');
+    stopSelectionTimer(); clearTimeout(hintTimer); hintNodes=new Set(); selected=[]; foundTargets=new Set(); foundBonus=new Set(); foundPathByWord=new Map(); solvedNodes=new Set(); cubeCleared=false;
+    score=0; bonusScore=0; crossFaceFinds=0; cubeHints=0; evaluating=false; cubeRecorded=false; winEl.classList.remove('show');
     let guard=0;
     do{ generatePuzzle(); cubePuzzleFingerprint=makeCubeFingerprint(); guard++; }
     while(playerStats.completedFingerprints.includes(cubePuzzleFingerprint) && guard<24);
-    cubePuzzleCode=`WC-${Date.now().toString(36).toUpperCase()}-${activeWordTheme.name.toUpperCase()}`;
-    wordThemeNameEl.textContent=`${activeWordTheme.name} set`; renderTargets(); renderBonus(); updateSelectionUI(); updateStats(); resetView(false); draw(); toast(`New ${activeWordTheme.name} cube · ${activeProfileName} · v${APP_VERSION}`);
+    cubePuzzleCode=`WC-${Date.now().toString(36).toUpperCase()}-${cubeDifficulty.toUpperCase()}-${activeWordTheme.name.toUpperCase()}`;
+    wordThemeNameEl.textContent=`${activeWordTheme.name} set`; updateDifficultyUI(); renderTargets(); renderBonus(); updateSelectionUI(); updateStats(); resetView(false); draw(); toast(`New ${CUBE_DIFFICULTIES[cubeDifficulty].label} ${activeWordTheme.name} cube · ${activeProfileName} · v${APP_VERSION}`);
   }
 
   function resetView(animate=true){ rotX=-22; rotY=-32; draw(); if(animate){ stage.classList.add('settling'); setTimeout(()=>stage.classList.remove('settling'),180); } }
@@ -699,8 +728,39 @@
 
   function flashTile(id){ flashUntil.set(id,performance.now()+360); draw(); setTimeout(()=>{ flashUntil.delete(id); draw(); },380); }
 
+  function updateDifficultyUI(){
+    const cfg=CUBE_DIFFICULTIES[cubeDifficulty];
+    cubeDifficultyBadge.textContent=cfg.label;
+    hintBtn.classList.toggle('hidden',cubeDifficulty==='hard');
+    if(cubeDifficulty==='beginner')difficultyMessageEl.textContent='All target words are visible. Hints highlight the required cube tiles for 5 seconds.';
+    else if(cubeDifficulty==='middle')difficultyMessageEl.textContent='Target words are hidden. Hints are available and highlight tiles only.';
+    else difficultyMessageEl.textContent='Target words are hidden and no hints are available. Routes are longer and more cross-face heavy.';
+  }
+
+  function showHint(){
+    if(cubeDifficulty==='hard' || evaluating)return;
+    const remaining=targets.filter(word=>!foundTargets.has(word));
+    if(!remaining.length)return;
+    const word=remaining[randInt(remaining.length)];
+    hintNodes=new Set(targetPaths.get(word)||[]);
+    clearTimeout(hintTimer);
+    cubeHints++;
+    score=Math.max(0,score-50);
+    updateStats();
+    draw();
+    toast('Hint tiles highlighted · -50','bonus');
+    hintTimer=setTimeout(()=>{hintNodes=new Set();draw();},5000);
+  }
+
   function renderTargets(){
     targetList.innerHTML='';
+    if(cubeDifficulty!=='beginner'){
+      const hidden=document.createElement('div');
+      hidden.className='difficulty-target-message';
+      hidden.textContent=`${foundTargets.size}/${targets.length} target words found · word list hidden in ${CUBE_DIFFICULTIES[cubeDifficulty].label}`;
+      targetList.appendChild(hidden);
+      return;
+    }
     for(const word of targets){
       const path=targetPaths.get(word)||[],faces=new Set(path.map(id=>nodeById.get(id).face)).size,item=document.createElement('div');
       item.className=`target-chip${foundTargets.has(word)?' found':''}`; item.innerHTML=`<strong>${word}</strong><span>${faces} face${faces===1?'':'s'}</span>`; targetList.appendChild(item);
@@ -739,7 +799,7 @@
     cubeCleared=true;
     recordCubeCompletion();
     draw();
-    winText.textContent=`${activeProfileName}, you cleared the ${activeWordTheme.name} cube: all ${TILE_COUNT} letters, ${targets.length} target words, ${crossFaceFinds} cross-face finds and ${score.toLocaleString()} points.`;
+    winText.textContent=`${activeProfileName}, you cleared the ${CUBE_DIFFICULTIES[cubeDifficulty].label} ${activeWordTheme.name} cube: all ${TILE_COUNT} letters, ${targets.length} target words, ${crossFaceFinds} cross-face finds, ${cubeHints} hints and ${score.toLocaleString()} points.`;
     setTimeout(()=>winEl.classList.add('show'),260);
   }
   function toast(message,type=''){ clearTimeout(toastTimer); toastEl.textContent=message; toastEl.className=`toast show ${type}`; toastTimer=setTimeout(()=>toastEl.className='toast',1900); }
@@ -766,7 +826,7 @@
 
   function bindEvents(){
     canvas.addEventListener('pointerdown',onPointerDown); canvas.addEventListener('pointermove',onPointerMove); canvas.addEventListener('pointerup',onPointerEnd); canvas.addEventListener('pointercancel',onPointerEnd);
-    checkBtn.addEventListener('click',evaluateSelection); clearBtn.addEventListener('click',clearSelection); newBtn.addEventListener('click',newPuzzle); resetViewBtn.addEventListener('click',()=>resetView(true)); nextCubeBtn.addEventListener('click',newPuzzle); themeBtn.addEventListener('click',()=>applyTheme(currentTheme==='light'?'dark':'light'));
+    checkBtn.addEventListener('click',evaluateSelection); clearBtn.addEventListener('click',clearSelection); hintBtn.addEventListener('click',showHint); newBtn.addEventListener('click',newPuzzle); resetViewBtn.addEventListener('click',()=>resetView(true)); nextCubeBtn.addEventListener('click',newPuzzle); themeBtn.addEventListener('click',()=>applyTheme(currentTheme==='light'?'dark':'light'));
     switchProfileBtn.addEventListener('click',()=>{localStorage.removeItem('anitasWordPathActiveProfile');sessionStorage.removeItem('anitasWordPathActiveProfile');window.location.href='../';});
     document.addEventListener('keydown',event=>{ if(event.key==='Escape') clearSelection(); if(event.key==='Enter' && selected.length>=3) evaluateSelection(); });
     if('ResizeObserver' in window) new ResizeObserver(resizeCanvas).observe(stage); else window.addEventListener('resize',resizeCanvas);
