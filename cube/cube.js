@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const APP_VERSION = '0.5.1';
+  const APP_VERSION = '0.6.0';
   const GRID = 3;
   const FACE_NAMES = ['front','right','back','left','top','bottom'];
   const TILE_COUNT = FACE_NAMES.length * GRID * GRID;
@@ -55,6 +55,8 @@
   const clearBtn = document.getElementById('clearBtn');
   const newBtn = document.getElementById('newBtn');
   const resetViewBtn = document.getElementById('resetViewBtn');
+  const themeBtn = document.getElementById('themeBtn');
+  const themeColorMeta = document.getElementById('themeColorMeta');
   const toastEl = document.getElementById('toast');
   const winEl = document.getElementById('win');
   const winText = document.getElementById('winText');
@@ -96,6 +98,45 @@
   let toastTimer = null;
   let evaluating = false;
   const flashUntil = new Map();
+  const THEME_KEY = 'anitasWordCubeTheme';
+  let currentTheme = 'dark';
+
+  const CANVAS_THEME = {
+    dark:{
+      face:'#0d1b17',faceStroke:'rgba(101,223,195,.24)',tile:'#e9eee8',tileText:'#10201a',
+      tileStroke:'rgba(9,27,21,.24)',selected:'#65dfc3',selectedStroke:'#d8fff4',
+      solved:'#aee17f',solvedStroke:'#d8ffb9',invalid:'#ef9f96',pathUnder:'rgba(4,14,11,.88)'
+    },
+    light:{
+      face:'#dfe9e4',faceStroke:'rgba(33,111,90,.30)',tile:'#fbfdfa',tileText:'#173028',
+      tileStroke:'rgba(23,48,40,.24)',selected:'#55d7b9',selectedStroke:'#147e67',
+      solved:'#b9e58f',solvedStroke:'#5d9634',invalid:'#ef9f96',pathUnder:'rgba(255,255,255,.96)'
+    }
+  };
+
+  function canvasTheme(){ return CANVAS_THEME[currentTheme] || CANVAS_THEME.dark; }
+
+  function applyTheme(theme,persist=true){
+    currentTheme = theme === 'light' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = currentTheme;
+    themeBtn.textContent = currentTheme === 'light' ? 'Dark mode' : 'Light mode';
+    themeBtn.setAttribute('aria-pressed',currentTheme === 'light' ? 'true' : 'false');
+    if(themeColorMeta) themeColorMeta.setAttribute('content',currentTheme === 'light' ? '#f3f7f4' : '#091311');
+    if(persist){
+      try{ localStorage.setItem(THEME_KEY,currentTheme); }catch(_){ /* local storage unavailable */ }
+    }
+    draw();
+  }
+
+  function initTheme(){
+    let saved='dark';
+    try{ saved=localStorage.getItem(THEME_KEY)||'dark'; }catch(_){ /* local storage unavailable */ }
+    applyTheme(saved,false);
+  }
+
+  function normalizeAngle(value){
+    return ((value + 180) % 360 + 360) % 360 - 180;
+  }
 
   function randInt(max){ return Math.floor(Math.random() * max); }
   function shuffle(list){
@@ -303,15 +344,16 @@
   function edgeLength(points){ let total=0; for(let i=0;i<4;i++) total+=Math.hypot(points[i].x-points[(i+1)%4].x,points[i].y-points[(i+1)%4].y); return total/4; }
 
   function drawFaceBase(face){
-    const q=faceCornerPoints(face).map(projectPoint); beginPoly(q); ctx.fillStyle='#0d1b17'; ctx.fill();
-    ctx.lineWidth=1.5; ctx.strokeStyle='rgba(101,223,195,.24)'; ctx.stroke();
+    const p=canvasTheme(),q=faceCornerPoints(face).map(projectPoint); beginPoly(q); ctx.fillStyle=p.face; ctx.fill();
+    ctx.lineWidth=1.5; ctx.strokeStyle=p.faceStroke; ctx.stroke();
   }
 
   function tileFill(id){
-    if(selected.includes(id)) return '#65dfc3';
-    if(solvedNodes.has(id)) return '#aee17f';
-    if(flashUntil.get(id)>performance.now()) return '#ef9f96';
-    return '#e9eee8';
+    const p=canvasTheme();
+    if(selected.includes(id)) return p.selected;
+    if(solvedNodes.has(id)) return p.solved;
+    if(flashUntil.get(id)>performance.now()) return p.invalid;
+    return p.tile;
   }
 
   function buildRenderedTiles(visibleFaces){
@@ -325,11 +367,11 @@
   }
 
   function drawTileShapes(){
-    const ordered=[...renderedTiles].sort((a,b)=>a.depth-b.depth);
+    const p=canvasTheme(),ordered=[...renderedTiles].sort((a,b)=>a.depth-b.depth);
     for(const tile of ordered){
       beginPoly(tile.quad); ctx.fillStyle=tileFill(tile.id); ctx.fill();
       ctx.lineWidth=selected.includes(tile.id)?3.5:1.3;
-      ctx.strokeStyle=selected.includes(tile.id)?'#d8fff4':solvedNodes.has(tile.id)?'#d8ffb9':'rgba(9,27,21,.24)'; ctx.stroke();
+      ctx.strokeStyle=selected.includes(tile.id)?p.selectedStroke:solvedNodes.has(tile.id)?p.solvedStroke:p.tileStroke; ctx.stroke();
     }
   }
 
@@ -347,7 +389,7 @@
 
   function drawSegment(a,b,color,width){
     const p1=projectPoint(a),p2=projectPoint(b); ctx.lineCap='round'; ctx.lineJoin='round';
-    ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.strokeStyle='rgba(4,14,11,.88)'; ctx.lineWidth=width+10; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.strokeStyle=canvasTheme().pathUnder; ctx.lineWidth=width+10; ctx.stroke();
     ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.strokeStyle=color; ctx.lineWidth=width; ctx.shadowColor=color; ctx.shadowBlur=8; ctx.stroke(); ctx.shadowBlur=0;
   }
 
@@ -383,7 +425,7 @@
       ctx.font='800 0.58px Georgia, "Times New Roman", serif';
       ctx.textAlign='center';
       ctx.textBaseline='middle';
-      ctx.fillStyle='#10201a';
+      ctx.fillStyle=canvasTheme().tileText;
       ctx.fillText(board[tile.id],0,0.03);
       ctx.restore();
       ctx.setTransform(dpr,0,0,dpr,0,0);
@@ -518,7 +560,7 @@
   function onPointerMove(event){
     if(rotating && event.pointerId===dragPointerId){
       const dx=event.clientX-lastPointerX,dy=event.clientY-lastPointerY; lastPointerX=event.clientX; lastPointerY=event.clientY;
-      rotY+=dx*0.34; rotX-=dy*0.34; rotX=Math.max(-89,Math.min(89,rotX)); draw(); return;
+      rotY=normalizeAngle(rotY+dx*0.34); rotX=normalizeAngle(rotX-dy*0.34); draw(); return;
     }
     const hit=hitTile(event.clientX,event.clientY); if(hit!==hoverTileId){ hoverTileId=hit; canvas.style.cursor=hit!==null?'pointer':'grab'; }
   }
@@ -530,11 +572,11 @@
 
   function bindEvents(){
     canvas.addEventListener('pointerdown',onPointerDown); canvas.addEventListener('pointermove',onPointerMove); canvas.addEventListener('pointerup',onPointerEnd); canvas.addEventListener('pointercancel',onPointerEnd);
-    checkBtn.addEventListener('click',evaluateSelection); clearBtn.addEventListener('click',clearSelection); newBtn.addEventListener('click',newPuzzle); resetViewBtn.addEventListener('click',()=>resetView(true)); nextCubeBtn.addEventListener('click',newPuzzle);
+    checkBtn.addEventListener('click',evaluateSelection); clearBtn.addEventListener('click',clearSelection); newBtn.addEventListener('click',newPuzzle); resetViewBtn.addEventListener('click',()=>resetView(true)); nextCubeBtn.addEventListener('click',newPuzzle); themeBtn.addEventListener('click',()=>applyTheme(currentTheme==='light'?'dark':'light'));
     document.addEventListener('keydown',event=>{ if(event.key==='Escape') clearSelection(); if(event.key==='Enter' && selected.length>=3) evaluateSelection(); });
     if('ResizeObserver' in window) new ResizeObserver(resizeCanvas).observe(stage); else window.addEventListener('resize',resizeCanvas);
   }
 
-  try{ buildGraph(); validateCrossFaceGeometry(); bindEvents(); resizeCanvas(); newPuzzle(); }
+  try{ buildGraph(); validateCrossFaceGeometry(); bindEvents(); initTheme(); resizeCanvas(); newPuzzle(); }
   catch(error){ console.error(error); currentWordEl.textContent='Could not generate cube'; selectionMetaEl.textContent='Reload the page to try again.'; }
 })();

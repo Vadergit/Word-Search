@@ -122,3 +122,47 @@ h1{margin:0;font-size:clamp(34px,6vw,62px);line-height:.95;letter-spacing:-.055e
   .rotate-hint{display:none}
   .selection-copy strong{font-size:21px}
 }
+
+
+/* Light theme ------------------------------------------------------------ */
+:root[data-theme="light"]{
+  --bg:#f3f7f4;--panel:#ffffff;--panel-2:#f5f9f6;
+  --line:rgba(31,72,58,.13);--line-strong:rgba(31,72,58,.22);
+  --text:#14251f;--muted:#64766f;--mint:#45cdb0;--green:#86c557;
+  --amber:#b9862f;--danger:#d86f64;--shadow:0 22px 70px rgba(30,70,55,.12)
+}
+html[data-theme="light"] body{
+  background:
+    radial-gradient(circle at 25% 5%,rgba(69,205,176,.14),transparent 30rem),
+    radial-gradient(circle at 90% 80%,rgba(87,120,255,.07),transparent 35rem),
+    var(--bg)
+}
+html[data-theme="light"] .version-badge{color:#176854;background:rgba(69,205,176,.11);border-color:rgba(35,145,117,.3)}
+html[data-theme="light"] .ghost-btn{color:#29453b;background:rgba(255,255,255,.52)}
+html[data-theme="light"] .ghost-btn:hover{background:rgba(69,205,176,.11);border-color:rgba(35,145,117,.38)}
+html[data-theme="light"] .secondary-btn{background:#edf4ef;color:#29453b;border-color:var(--line)}
+html[data-theme="light"] .stat-card{background:rgba(255,255,255,.82);box-shadow:0 12px 34px rgba(30,70,55,.07)}
+html[data-theme="light"] .cube-panel,
+html[data-theme="light"] .side-panel{background:rgba(255,255,255,.82)}
+html[data-theme="light"] .interaction-note{color:#5f736b}
+html[data-theme="light"] .stage{
+  background:
+    linear-gradient(rgba(31,72,58,.045) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(31,72,58,.045) 1px,transparent 1px),
+    radial-gradient(circle at center,rgba(69,205,176,.10),transparent 47%);
+  background-size:28px 28px,28px 28px,auto;
+  border-color:rgba(31,72,58,.08)
+}
+html[data-theme="light"] .rotate-hint{color:rgba(48,91,77,.30)}
+html[data-theme="light"] .selection-card{background:#f8fbf9}
+html[data-theme="light"] .timer-track{background:#e5eee8}
+html[data-theme="light"] .target-chip{background:#f5f9f6}
+html[data-theme="light"] .target-chip.found{background:rgba(134,197,87,.16)}
+html[data-theme="light"] .target-chip.found strong{color:#4e762e}
+html[data-theme="light"] .bonus-chip{color:#8b621e;background:rgba(185,134,47,.08)}
+html[data-theme="light"] .howto strong{color:#29453b}
+html[data-theme="light"] .howto b{color:#385a4e}
+html[data-theme="light"] .howto em{color:#29453b}
+html[data-theme="light"] .toast{background:#ffffff;color:#233a32;box-shadow:0 14px 40px rgba(30,70,55,.18)}
+html[data-theme="light"] .win{background:rgba(228,239,233,.82)}
+html[data-theme="light"] .win-card{background:#ffffff;box-shadow:0 30px 90px rgba(30,70,55,.20)}
