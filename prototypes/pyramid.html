@@ -4,14 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" id="themeColorMeta" content="#f3f7f4" />
-  <title>Word Pyramid Prototype · v0.4.6</title>
-  <link rel="stylesheet" href="prototype.css?v=0.4.6" />
+  <title>Word Pyramid Prototype · v0.4.8</title>
+  <link rel="stylesheet" href="prototype.css?v=0.4.8" />
 </head>
 <body data-mode="pyramid">
   <main class="app-shell">
     <header class="topbar">
       <div>
-        <div class="eyebrow">3D prototype <span class="version-badge">v0.4.6</span></div>
+        <div class="eyebrow">3D prototype <span class="version-badge">v0.4.8</span></div>
         <h1>Word Pyramid</h1>
         <p>A solid square pyramid with 64 real triangular letter tiles. The tile geometry follows the approved geometry review, while selection, trails and interaction deliberately follow the Word Cube.</p>
       </div>
@@ -69,7 +69,7 @@
           <p><b>Select:</b> tap a touching tile. Selected tiles turn mint immediately and the path uses the same rounded mint stroke with underlay as the Word Cube.</p>
           <p><b>Backtrack:</b> tap a tile already in the active path to jump back, matching the Cube interaction.</p>
         </div>
-        <div class="prototype-note"><strong>Prototype v0.4.6.</strong> Geometry only is being developed here. The actual Word Path game and Cube files are not changed by this prototype.</div>
+        <div class="prototype-note"><strong>Prototype v0.4.8.</strong> Geometry only is being developed here. The actual Word Path game and Cube files are not changed by this prototype.</div>
       </aside>
     </section>
   </main>
@@ -78,6 +78,9 @@
   <div class="win" id="win" role="dialog" aria-modal="true">
     <div class="win-card"><div class="win-mark">✓</div><div class="eyebrow">Prototype complete</div><h2>Shape solved.</h2><p id="winText"></p><button class="primary-btn" id="nextBtn" type="button">Generate next prototype</button></div>
   </div>
-  <script src="prototype.js?v=0.4.6"></script>
+  <script src="prototype-core.js?v=0.4.8"></script>
+  <script src="prototype-geometry.js?v=0.4.8"></script>
+  <script src="prototype-render.js?v=0.4.8"></script>
+  <script src="prototype-runtime.js?v=0.4.8"></script>
 </body>
 </html>
