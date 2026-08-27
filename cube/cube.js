@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const APP_VERSION = '0.4.1';
+  const APP_VERSION = '0.4.2';
   const FACE_NAMES = ['front','right','back','left','top','bottom'];
   const GRID = 3;
   const TILE_COUNT = FACE_NAMES.length * GRID * GRID;
@@ -23,6 +23,7 @@
 
   const stage = document.getElementById('stage');
   const cube = document.getElementById('cube');
+  const pathLayer = document.getElementById('pathLayer');
   const currentWordEl = document.getElementById('currentWord');
   const selectionMetaEl = document.getElementById('selectionMeta');
   const timerBar = document.getElementById('timerBar');
@@ -53,6 +54,8 @@
   let foundBonus = new Set();
   let solvedNodes = new Set();
   let solvedStepByNode = new Map();
+  let foundPathByWord = new Map();
+  let pathRenderFrame = null;
   let selected = [];
   let score = 0;
   let bonusScore = 0;
@@ -157,6 +160,66 @@
     }
   }
 
+  function tileCenter(id){
+    const el=tileEls.get(id);
+    if(!el) return null;
+    const faceEl=el.closest('.face');
+    if(!faceEl || !faceEl.classList.contains('hit-visible')) return null;
+    const rect=el.getBoundingClientRect();
+    const stageRect=stage.getBoundingClientRect();
+    if(rect.width<2 || rect.height<2) return null;
+    return {
+      x:rect.left-stageRect.left+rect.width/2,
+      y:rect.top-stageRect.top+rect.height/2,
+      radius:Math.min(rect.width,rect.height)*0.33
+    };
+  }
+
+  function addPathSegment(a,b,type){
+    const p1=tileCenter(a),p2=tileCenter(b);
+    if(!p1 || !p2) return;
+    const dx=p2.x-p1.x,dy=p2.y-p1.y;
+    const d=Math.hypot(dx,dy);
+    if(d<1) return;
+    const ux=dx/d,uy=dy/d;
+    const x1=p1.x+ux*p1.radius,y1=p1.y+uy*p1.radius;
+    const x2=p2.x-ux*p2.radius,y2=p2.y-uy*p2.radius;
+    const ns='http://www.w3.org/2000/svg';
+
+    const under=document.createElementNS(ns,'line');
+    under.setAttribute('x1',x1);under.setAttribute('y1',y1);
+    under.setAttribute('x2',x2);under.setAttribute('y2',y2);
+    under.setAttribute('class',`path-segment path-under ${type}`);
+    pathLayer.appendChild(under);
+
+    const line=document.createElementNS(ns,'line');
+    line.setAttribute('x1',x1);line.setAttribute('y1',y1);
+    line.setAttribute('x2',x2);line.setAttribute('y2',y2);
+    line.setAttribute('class',`path-segment ${type}`);
+    pathLayer.appendChild(line);
+  }
+
+  function drawPath(path,type){
+    for(let i=1;i<path.length;i++) addPathSegment(path[i-1],path[i],type);
+  }
+
+  function renderPathLayer(){
+    if(!pathLayer) return;
+    const rect=stage.getBoundingClientRect();
+    pathLayer.setAttribute('viewBox',`0 0 ${Math.max(1,rect.width)} ${Math.max(1,rect.height)}`);
+    pathLayer.innerHTML='';
+    foundPathByWord.forEach(path=>drawPath(path,'solved-path'));
+    if(selected.length>1) drawPath(selected,'active-path');
+  }
+
+  function schedulePathRender(){
+    if(pathRenderFrame!==null) return;
+    pathRenderFrame=requestAnimationFrame(()=>{
+      pathRenderFrame=null;
+      renderPathLayer();
+    });
+  }
+
   function renderCube(){
     FACE_NAMES.forEach(face => {
       const faceEl = document.querySelector(`.face[data-face="${face}"] .face-grid`);
@@ -189,6 +252,7 @@
       });
     });
     updateTileStates();
+    schedulePathRender();
   }
 
   function compatible(nodeId, letter, workingBoard){
@@ -378,6 +442,7 @@
     foundBonus = new Set();
     solvedNodes = new Set();
     solvedStepByNode = new Map();
+    foundPathByWord = new Map();
     score = 0;
     bonusScore = 0;
     crossFaceFinds = 0;
@@ -422,6 +487,7 @@
   function applyRotation(){
     cube.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg)`;
     updateFaceHitTesting();
+    schedulePathRender();
   }
 
   function resetView(){
@@ -507,6 +573,7 @@
       if(step >= 0) el.dataset.step = String(step+1);
       else delete el.dataset.step;
     });
+    schedulePathRender();
   }
 
   function startSelectionTimer(duration){
@@ -570,6 +637,7 @@
           solvedNodes.add(id);
           if(!solvedStepByNode.has(id)) solvedStepByNode.set(id,index+1);
         });
+        foundPathByWord.set(word,[...pathSnapshot]);
         updateTileStates();
         const earned = word.length * TARGET_SCORE + Math.max(0,facesUsed-1)*180;
         score += earned;
@@ -714,6 +782,8 @@
       if(event.key === 'Enter' && selected.length >= 3) evaluateSelection();
     });
   }
+
+  window.addEventListener('resize',schedulePathRender);
 
   try{
     buildGraph();
