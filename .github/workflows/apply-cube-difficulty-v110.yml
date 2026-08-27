@@ -18,7 +18,9 @@ jobs:
           ref: main
 
       - name: Apply v1.1.0 difficulty integration
-        run: python3 patch_cube_difficulty_v110.py
+        run: |
+          python3 patch_cube_difficulty_v110.py
+          python3 fix_v110_cache.py
 
       - name: Validate JavaScript and HTML scripts
         run: |
