@@ -27,14 +27,30 @@ jobs:
 
       - name: Validate timer pause requirements
         run: |
-          grep -q "const APP_VERSION = '1.1.1';" cube/cube.js
-          grep -q 'Timer paused while rotating' cube/cube.js
-          grep -q 'setTimerBarImmediate' cube/cube.js
-          grep -q 'lostpointercapture' cube/cube.js
-          grep -q "window.addEventListener('blur'" cube/cube.js
-          grep -q 'v1.1.1' cube/index.html
-          grep -q 'cube.js?v=1.1.1' cube/index.html
-          grep -q 'Word game suite · v1.1.1' index.html
+          python3 - <<'PY'
+          from pathlib import Path
+          checks={
+            'cube/cube.js':[
+              "const APP_VERSION = '1.1.1';",
+              'Timer paused while rotating',
+              'setTimerBarImmediate',
+              'lostpointercapture',
+              "window.addEventListener('blur'",
+              'timerPausedForRotation=pauseSelectionTimer()',
+              'if(shouldResume) resumeSelectionTimer()',
+            ],
+            'cube/index.html':['v1.1.1','cube.js?v=1.1.1'],
+            'index.html':['Word game suite · v1.1.1'],
+          }
+          missing=[]
+          for path,needles in checks.items():
+            text=Path(path).read_text(encoding='utf-8')
+            for needle in needles:
+              ok=needle in text
+              print(('OK  ' if ok else 'MISS'),path,repr(needle))
+              if not ok: missing.append((path,needle))
+          assert not missing, missing
+          PY
 
       - name: Commit v1.1.1
         run: |
