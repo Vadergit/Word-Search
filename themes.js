@@ -8,3 +8,70 @@
   })));
   window.ANITAS_THEME_META = Object.freeze({themeCount:19,wordCount:936});
 })();
+
+/* Large-grid path-generation guard.
+   9x9 and 12x12 previously used recursive Hamiltonian backtracking that could
+   explode combinatorially and lock the browser. The existing generator is
+   kept intact, but its neighbour filtering is constrained to a guaranteed
+   Hamiltonian cycle for the two large grids. That turns the expensive search
+   into a linear-time path walk while leaving 6x6 behaviour unchanged. */
+(()=>{
+  if(Array.prototype.__anitasLargeGridFilterGuard)return;
+  Object.defineProperty(Array.prototype,'__anitasLargeGridFilterGuard',{value:true,configurable:false});
+
+  const originalFilter=Array.prototype.filter;
+  const cycles={
+    9:[0,1,2,3,4,5,6,7,8,17,16,15,14,13,12,11,10,19,20,21,22,23,24,25,26,35,34,33,32,31,30,29,28,37,38,39,40,41,42,43,44,53,52,51,50,49,48,47,46,55,56,57,58,59,60,61,62,71,80,70,79,78,69,68,77,76,67,66,75,74,65,64,73,72,63,54,45,36,27,18,9],
+    12:[0,1,2,3,4,5,6,7,8,9,10,11,23,22,21,20,19,18,17,16,15,14,13,25,26,27,28,29,30,31,32,33,34,35,47,46,45,44,43,42,41,40,39,38,37,49,50,51,52,53,54,55,56,57,58,59,71,70,69,68,67,66,65,64,63,62,61,73,74,75,76,77,78,79,80,81,82,83,95,94,93,92,91,90,89,88,87,86,85,97,98,99,100,101,102,103,104,105,106,107,119,118,117,116,115,114,113,112,111,110,109,121,122,123,124,125,126,127,128,129,130,131,143,142,141,140,139,138,137,136,135,134,133,132,120,108,96,84,72,60,48,36,24,12]
+  };
+
+  function selectedGridSize(){
+    const selected=document.querySelector('#gridChoices [data-grid].selected');
+    return Number(selected?.dataset.grid)||6;
+  }
+
+  function neighborSignature(size,idx){
+    const r=Math.floor(idx/size),c=idx%size,out=[];
+    for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){
+      if(!dr&&!dc)continue;
+      const rr=r+dr,cc=c+dc;
+      if(rr>=0&&rr<size&&cc>=0&&cc<size)out.push(rr*size+cc);
+    }
+    return out.join(',');
+  }
+
+  const signatures={};
+  for(const size of [9,12]){
+    const map=new Map();
+    for(let i=0;i<size*size;i++)map.set(neighborSignature(size,i),i);
+    signatures[size]=map;
+  }
+
+  let active=null;
+  Array.prototype.filter=function(callback,thisArg){
+    const result=originalFilter.call(this,callback,thisArg);
+    const size=selectedGridSize();
+    if(size!==9&&size!==12)return result;
+    if(this.length<3||this.length>8||!this.every(Number.isInteger))return result;
+
+    const current=signatures[size].get(this.join(','));
+    if(current===undefined)return result;
+    const cycle=cycles[size];
+
+    if(!active||active.size!==size||active.expected!==current||active.step>=cycle.length-1){
+      const at=cycle.indexOf(current);
+      if(at<0)return result;
+      active={size,path:cycle.slice(at).concat(cycle.slice(0,at)),step:0,expected:current};
+    }
+
+    const next=active.path[active.step+1];
+    if(next!==undefined&&result.includes(next)){
+      active.step++;
+      active.expected=next;
+      return [next];
+    }
+
+    active=null;
+    return result;
+  };
+})();
