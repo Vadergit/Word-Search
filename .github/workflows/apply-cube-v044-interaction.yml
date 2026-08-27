@@ -1,0 +1,38 @@
+name: Apply cube v0.4.4 interaction fix
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-cube-v044-interaction.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Apply v0.4.4 changes
+        run: python patch_cube_v044_interaction.py
+      - name: Validate
+        run: |
+          node --check cube/cube.js
+          git diff --check
+          grep -q "const APP_VERSION = '0.4.4';" cube/cube.js
+          grep -q 'stroke-width:17' cube/cube.css
+          grep -q 'stroke-width:16' cube/cube.css
+          grep -q 'pointer-events:auto;' cube/cube.css
+          grep -q 'cube.css?v=0.4.4' cube/index.html
+          grep -q 'cube.js?v=0.4.4' cube/index.html
+          ! grep -q "classList.contains('hit-visible')" cube/cube.js
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add cube/index.html cube/cube.js cube/cube.css
+          git commit -m "Cube v0.4.4: strengthen paths and unlock all faces"
+          git push origin HEAD:main
