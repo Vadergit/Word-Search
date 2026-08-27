@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const APP_VERSION = '0.7.1';
+  const APP_VERSION = '0.7.2';
   const GRID = 3;
   const FACE_NAMES = ['front','right','back','left','top','bottom'];
   const TILE_COUNT = FACE_NAMES.length * GRID * GRID;
@@ -377,7 +377,18 @@
     return {x:canvasWidth/2+r[0]*scale,y:canvasHeight/2+r[1]*scale,z:r[2],scale};
   }
 
-  function faceVisibility(face){ return rotatePoint(FACE[face].n)[2]; }
+  function faceFacingCosine(face,plane=PLANE){
+    const normal=rotatePoint(FACE[face].n);
+    const center=rotatePoint(V.mul(FACE[face].n,plane));
+    const toCamera=[-center[0],-center[1],CAMERA_Z-center[2]];
+    const distance=Math.max(1e-6,V.len(toCamera));
+    const dot=normal[0]*toCamera[0]+normal[1]*toCamera[1]+normal[2]*toCamera[2];
+    return dot/distance;
+  }
+
+  function faceVisible(face,plane=PLANE,margin=0.025){
+    return faceFacingCosine(face,plane)>margin;
+  }
 
   function faceCornerPoints(face){
     const d=FACE[face];
@@ -417,7 +428,7 @@
 
   function drawSolidCore(){
     const t=canvasTheme();
-    const faces=FACE_NAMES.filter(face=>faceVisibility(face)>0.001)
+    const faces=FACE_NAMES.filter(face=>faceVisible(face,CORE_PLANE,0.018))
       .sort((a,b)=>averageDepth(coreFaceCornerPoints(a).map(projectPoint))-averageDepth(coreFaceCornerPoints(b).map(projectPoint)));
     for(const face of faces){
       const q=coreFaceCornerPoints(face).map(projectPoint);
@@ -481,6 +492,7 @@
   }
 
   function drawSegmentOnFace(face,a,b,color,baseWidth){
+    if(!faceVisible(face,PLANE,0.025)) return;
     const q=faceCornerPoints(face).map(projectPoint);
     const p1=projectPoint(a),p2=projectPoint(b),width=facePathWidth(face,baseWidth);
     ctx.save();
@@ -495,7 +507,7 @@
   function drawPath(path,color,width){
     for(let i=1;i<path.length;i++){
       for(const part of pathParts(path[i-1],path[i])){
-        if(faceVisibility(part.face)>0.025) drawSegmentOnFace(part.face,part.a,part.b,color,width);
+        if(faceVisible(part.face,PLANE,0.025)) drawSegmentOnFace(part.face,part.a,part.b,color,width);
       }
     }
   }
@@ -524,7 +536,7 @@
       if(cubeCleared) continue;
 
       const minorAxis=Math.min(Math.hypot(ux,uy),Math.hypot(vx,vy));
-      if(faceVisibility(tile.face)<0.10 || minorAxis<10) continue;
+      if(faceFacingCosine(tile.face,PLANE)<0.075 || minorAxis<12) continue;
 
       ctx.save();
       beginPoly(q);
@@ -543,7 +555,7 @@
   function draw(){
     ctx.clearRect(0,0,canvasWidth,canvasHeight);
     drawSolidCore();
-    const visible=FACE_NAMES.filter(face=>faceVisibility(face)>0.015).sort((a,b)=>averageDepth(faceCornerPoints(a).map(projectPoint))-averageDepth(faceCornerPoints(b).map(projectPoint)));
+    const visible=FACE_NAMES.filter(face=>faceVisible(face,PLANE,0.025)).sort((a,b)=>averageDepth(faceCornerPoints(a).map(projectPoint))-averageDepth(faceCornerPoints(b).map(projectPoint)));
     for(const face of visible) drawFaceBase(face);
     buildRenderedTiles(visible); drawTileShapes(); drawAllPaths(); drawTileLabels();
   }
