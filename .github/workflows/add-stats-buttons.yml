@@ -1,0 +1,78 @@
+name: Add statistics buttons
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/add-stats-buttons.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Add statistics links to main game
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          text=p.read_text(encoding='utf-8')
+
+          old='''    <div class="player-bar"><div><strong id="startPlayerName">Player</strong><span>Local profile</span></div><button class="btn secondary" id="switchProfileStartBtn" type="button">Switch player</button></div>'''
+          new='''    <div class="player-bar"><div><strong id="startPlayerName">Player</strong><span>Local profile</span></div><div style="display:flex;gap:7px;flex-wrap:wrap"><a class="btn secondary" href="stats.html">Statistics</a><button class="btn secondary" id="switchProfileStartBtn" type="button">Switch player</button></div></div>'''
+          if old in text:
+              text=text.replace(old,new,1)
+          elif 'href="stats.html">Statistics</a>' not in text:
+              raise SystemExit('Could not find start profile bar')
+
+          old='''        <button class="mode-button" id="switchProfileGameBtn" type="button">Switch player</button>
+        <button class="mode-button" id="soundBtn" type="button">Sound on</button>'''
+          new='''        <a class="mode-button stats-link" href="stats.html">Statistics</a>
+        <button class="mode-button" id="switchProfileGameBtn" type="button">Switch player</button>
+        <button class="mode-button" id="soundBtn" type="button">Sound on</button>'''
+          if old in text:
+              text=text.replace(old,new,1)
+          elif 'class="mode-button stats-link" href="stats.html"' not in text:
+              raise SystemExit('Could not find game profile controls')
+
+          css='''\n    a.btn{text-decoration:none}\n    .mode-button.stats-link{text-decoration:none;display:inline-flex;align-items:center;justify-content:center}\n'''
+          anchor='    .layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}'
+          if '.mode-button.stats-link{' not in text:
+              if anchor not in text: raise SystemExit('Could not find CSS anchor')
+              text=text.replace(anchor,css+'\n'+anchor,1)
+
+          p.write_text(text,encoding='utf-8')
+          PY
+
+      - name: Validate HTML script syntax
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          text=Path('index.html').read_text(encoding='utf-8')
+          assert text.count('href="stats.html"') >= 2
+          assert 'switchProfileStartBtn' in text
+          assert 'switchProfileGameBtn' in text
+          start=text.rfind('<script>')
+          end=text.rfind('</script>')
+          if start>=0 and end>start:
+              Path('/tmp/app.js').write_text(text[start+8:end],encoding='utf-8')
+          PY
+          if [ -f /tmp/app.js ]; then node --check /tmp/app.js; fi
+
+      - name: Commit change
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --check
+          git commit -m "Add statistics links to main game"
+          git push origin HEAD:main
