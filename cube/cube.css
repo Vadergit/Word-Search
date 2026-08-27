@@ -174,3 +174,70 @@ html[data-theme="light"] .win-card{background:#ffffff;box-shadow:0 30px 90px rgb
 .difficulty-message{margin:0 0 12px;padding:9px 10px;border:1px solid var(--line);border-radius:12px;background:var(--panel-2);color:var(--muted);font-size:10px;line-height:1.45}
 .difficulty-target-message{grid-column:1/-1;padding:18px 12px;border:1px dashed var(--line-strong);border-radius:13px;text-align:center;color:var(--muted);font-size:11px;line-height:1.5;background:var(--panel-2)}
 .hidden{display:none!important}
+
+
+/* v1.4.0 — stronger theme identity + cube loading state ------------------ */
+.theme-badge{
+  display:grid;grid-template-columns:auto;gap:1px;align-items:center;justify-items:start;
+  min-width:112px;padding:7px 14px;border-radius:16px;
+  border:1px solid rgba(171,126,14,.28);
+  background:linear-gradient(135deg,#fff1aa 0%,#f3ce58 100%);
+  color:#29240f;box-shadow:0 8px 22px rgba(190,145,22,.16);
+  white-space:nowrap
+}
+.theme-badge-label{
+  font-size:8px;line-height:1;text-transform:uppercase;letter-spacing:.15em;
+  font-weight:950;opacity:.65
+}
+.theme-badge strong{font-size:13px;line-height:1.15;font-weight:950;letter-spacing:-.01em}
+.theme-showcase{
+  margin:-3px 0 14px;padding:13px 14px;border-radius:16px;
+  border:1px solid rgba(185,134,47,.26);
+  background:linear-gradient(135deg,rgba(255,235,150,.22),rgba(228,185,106,.10));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06)
+}
+.theme-showcase span{display:block;margin-bottom:3px;color:var(--amber);font-size:8px;font-weight:950;letter-spacing:.15em;text-transform:uppercase}
+.theme-showcase strong{display:block;font-size:25px;line-height:1.05;letter-spacing:-.035em;color:var(--text)}
+.target-heading{margin-top:0}
+.ghost-btn:disabled{opacity:.42;cursor:wait;transform:none}
+
+.cube-loading{
+  position:fixed;inset:0;z-index:140;display:grid;place-items:center;padding:24px;
+  background:rgba(5,14,11,.62);backdrop-filter:blur(9px);
+  opacity:0;visibility:hidden;pointer-events:none;transition:opacity .16s ease,visibility .16s ease
+}
+.cube-loading.show{opacity:1;visibility:visible;pointer-events:auto}
+.cube-loading-card{
+  width:min(340px,calc(100vw - 32px));padding:28px 24px 24px;text-align:center;
+  border:1px solid var(--line-strong);border-radius:24px;background:rgba(12,23,20,.96);
+  box-shadow:0 28px 90px rgba(0,0,0,.38)
+}
+.cube-loading-card>strong{display:block;margin-top:18px;font-size:18px;letter-spacing:-.02em}
+.cube-loading-card>span{display:block;margin-top:6px;color:var(--muted);font-size:11px;line-height:1.45}
+.loader-cube-scene{width:88px;height:88px;margin:4px auto 0;perspective:320px;display:grid;place-items:center}
+.loader-cube{position:relative;width:64px;height:64px;transform-style:preserve-3d;animation:wordCubeSpin 1.55s linear infinite}
+.loader-face{
+  position:absolute;inset:0;border:2px solid rgba(54,92,79,.72);border-radius:3px;
+  background-color:#f8fbf8;
+  background-image:
+    linear-gradient(90deg,transparent 32%,rgba(54,92,79,.68) 32%,rgba(54,92,79,.68) 35%,transparent 35%,transparent 65%,rgba(54,92,79,.68) 65%,rgba(54,92,79,.68) 68%,transparent 68%),
+    linear-gradient(transparent 32%,rgba(54,92,79,.68) 32%,rgba(54,92,79,.68) 35%,transparent 35%,transparent 65%,rgba(54,92,79,.68) 65%,rgba(54,92,79,.68) 68%,transparent 68%);
+  box-shadow:inset 0 0 18px rgba(69,205,176,.06)
+}
+.loader-front{transform:translateZ(32px)}
+.loader-back{transform:rotateY(180deg) translateZ(32px)}
+.loader-right{transform:rotateY(90deg) translateZ(32px)}
+.loader-left{transform:rotateY(-90deg) translateZ(32px)}
+.loader-top{transform:rotateX(90deg) translateZ(32px)}
+.loader-bottom{transform:rotateX(-90deg) translateZ(32px)}
+@keyframes wordCubeSpin{from{transform:rotateX(-24deg) rotateY(0deg)}to{transform:rotateX(336deg) rotateY(360deg)}}
+
+html[data-theme="light"] .cube-loading{background:rgba(237,245,240,.72)}
+html[data-theme="light"] .cube-loading-card{background:rgba(255,255,255,.97);box-shadow:0 28px 90px rgba(30,70,55,.18)}
+html[data-theme="light"] .theme-showcase{background:linear-gradient(135deg,rgba(255,240,172,.60),rgba(255,250,225,.78));border-color:rgba(185,134,47,.30)}
+
+@media(max-width:700px){
+  .theme-badge{min-width:104px}
+  .theme-showcase strong{font-size:22px}
+}
+@media(prefers-reduced-motion:reduce){.loader-cube{animation-duration:5s}}

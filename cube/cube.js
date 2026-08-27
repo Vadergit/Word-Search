@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const APP_VERSION = '1.3.0';
+  const APP_VERSION = '1.4.0';
   const GRID = 3;
   const FACE_NAMES = ['front','right','back','left','top','bottom'];
   const TILE_COUNT = FACE_NAMES.length * GRID * GRID;
@@ -95,6 +95,10 @@
   const cubePlayerNameEl = document.getElementById('cubePlayerName');
   const cubeDifficultyBadge = document.getElementById('cubeDifficultyBadge');
   const cubeThemeBadge = document.getElementById('cubeThemeBadge');
+  const cubeThemeValue = document.getElementById('cubeThemeValue');
+  const cubeLoading = document.getElementById('cubeLoading');
+  const cubeLoadingTitle = document.getElementById('cubeLoadingTitle');
+  const cubeLoadingDetail = document.getElementById('cubeLoadingDetail');
   const difficultyMessageEl = document.getElementById('difficultyMessage');
   const hintBtn = document.getElementById('hintBtn');
   const switchProfileBtn = document.getElementById('switchProfileBtn');
@@ -843,15 +847,49 @@
     return `CUBE-${cubeDifficulty}-${activeWordTheme.name}-${hashText(`${board.join('')}|${targetKey}`).toString(36).toUpperCase()}`;
   }
 
-  function newPuzzle(){
+  function setCubeLoading(active){
+    if(!cubeLoading) return;
+    cubeLoading.classList.toggle('show',active);
+    cubeLoading.setAttribute('aria-busy',active?'true':'false');
+    if(cubeLoadingTitle) cubeLoadingTitle.textContent='Building a new word cube…';
+    if(cubeLoadingDetail) cubeLoadingDetail.textContent='Choosing a theme and preparing unique routes';
+    newBtn.disabled=active;
+    nextCubeBtn.disabled=active;
+    resetViewBtn.disabled=active;
+  }
+
+  function letLoaderPaint(){
+    return new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+  }
+
+  async function newPuzzle(){
     stopSolveClock();
-    stopSelectionTimer(); clearTimeout(hintTimer); hintNodes=new Set(); selected=[]; foundTargets=new Set(); foundBonus=new Set(); foundPathByWord=new Map(); solvedNodes=new Set(); cubeCleared=false;
-    score=0; bonusScore=0; crossFaceFinds=0; cubeHints=0; evaluating=false; cubeRecorded=false; winEl.classList.remove('show');
-    let guard=0;
-    do{ generatePuzzle(); cubePuzzleFingerprint=makeCubeFingerprint(); guard++; }
-    while(playerStats.completedFingerprints.includes(cubePuzzleFingerprint) && guard<24);
-    cubePuzzleCode=`WC-${Date.now().toString(36).toUpperCase()}-${cubeDifficulty.toUpperCase()}-${activeWordTheme.name.toUpperCase()}`;
-    wordThemeNameEl.textContent=`${activeWordTheme.name} set`; cubeThemeBadge.textContent=`Theme: ${activeWordTheme.name}`; updateDifficultyUI(); renderTargets(); renderBonus(); updateSelectionUI(); updateStats(); resetView(false); draw(); startSolveClock(); toast(`New ${CUBE_DIFFICULTIES[cubeDifficulty].label} ${activeWordTheme.name} cube · ${activeProfileName} · v${APP_VERSION}`);
+    stopSelectionTimer();
+    clearTimeout(hintTimer);
+    winEl.classList.remove('show');
+    setCubeLoading(true);
+    await letLoaderPaint();
+    try{
+      hintNodes=new Set(); selected=[]; foundTargets=new Set(); foundBonus=new Set(); foundPathByWord=new Map(); solvedNodes=new Set(); cubeCleared=false;
+      score=0; bonusScore=0; crossFaceFinds=0; cubeHints=0; evaluating=false; cubeRecorded=false;
+      let guard=0;
+      do{ generatePuzzle(); cubePuzzleFingerprint=makeCubeFingerprint(); guard++; }
+      while(playerStats.completedFingerprints.includes(cubePuzzleFingerprint) && guard<24);
+      cubePuzzleCode=`WC-${Date.now().toString(36).toUpperCase()}-${cubeDifficulty.toUpperCase()}-${activeWordTheme.name.toUpperCase()}`;
+      wordThemeNameEl.textContent=activeWordTheme.name;
+      if(cubeThemeValue) cubeThemeValue.textContent=activeWordTheme.name;
+      updateDifficultyUI(); renderTargets(); renderBonus(); updateSelectionUI(); updateStats(); resetView(false); draw(); startSolveClock();
+      toast(`New ${CUBE_DIFFICULTIES[cubeDifficulty].label} ${activeWordTheme.name} cube · ${activeProfileName} · v${APP_VERSION}`);
+    }catch(error){
+      console.error(error);
+      if(cubeThemeValue) cubeThemeValue.textContent='Unavailable';
+      if(wordThemeNameEl) wordThemeNameEl.textContent='Unavailable';
+      currentWordEl.textContent='Could not generate cube';
+      selectionMetaEl.textContent='Press New cube to retry.';
+      toast('Cube generation failed · please retry','error');
+    }finally{
+      setCubeLoading(false);
+    }
   }
 
   function resetView(animate=true){ rotX=-22; rotY=-32; draw(); if(animate){ stage.classList.add('settling'); setTimeout(()=>stage.classList.remove('settling'),180); } }
@@ -1112,5 +1150,5 @@
   }
 
   try{ cubePlayerNameEl.textContent=activeProfileName; buildGraph(); validateCrossFaceGeometry(); fastOrientationMaps=buildCubeOrientationMaps(); if(fastOrientationMaps.length!==24) throw new Error(`Cube orientation mismatch: ${fastOrientationMaps.length}`); bindEvents(); initTheme(); resizeCanvas(); newPuzzle(); }
-  catch(error){ console.error(error); if(cubeThemeBadge)cubeThemeBadge.textContent='Theme: unavailable'; if(wordThemeNameEl)wordThemeNameEl.textContent='Generation failed'; currentWordEl.textContent='Could not generate cube'; selectionMetaEl.textContent='Press New cube to retry.'; }
+  catch(error){ console.error(error); if(cubeThemeValue)cubeThemeValue.textContent='Unavailable'; if(wordThemeNameEl)wordThemeNameEl.textContent='Unavailable'; if(cubeLoading)cubeLoading.classList.remove('show'); currentWordEl.textContent='Could not generate cube'; selectionMetaEl.textContent='Press New cube to retry.'; }
 })();

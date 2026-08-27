@@ -4,22 +4,25 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" id="themeColorMeta" content="#f3f7f4" />
-  <title>Anitas Word Cube · v1.3.0</title>
+  <title>Anitas Word Cube · v1.4.0</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23091311'/%3E%3Cg fill='none' stroke='%2359c9c4' stroke-width='5' stroke-linecap='round'%3E%3Cpath d='M18 18h14v14H18zM32 32h14v14H32zM25 25l14 14'/%3E%3C/g%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="cube.css?v=1.3.0" />
+  <link rel="stylesheet" href="cube.css?v=1.4.0" />
 </head>
 <body>
   <main class="app-shell">
     <header class="topbar">
       <div>
-        <div class="eyebrow">3D game <span class="version-badge">v1.3.0</span></div>
+        <div class="eyebrow">3D game <span class="version-badge">v1.4.0</span></div>
         <h1>Anitas Word Cube</h1>
         <p>Find words across a rotatable 3×3 cube. Paths may continue over cube edges onto another face.</p>
       </div>
       <div class="top-actions">
         <span class="profile-badge" id="cubePlayerName">Player</span>
         <span class="difficulty-badge" id="cubeDifficultyBadge">Beginner</span>
-        <span class="theme-badge" id="cubeThemeBadge">Theme: loading…</span>
+        <span class="theme-badge" id="cubeThemeBadge">
+          <span class="theme-badge-label">Theme</span>
+          <strong id="cubeThemeValue">Loading…</strong>
+        </span>
         <a class="ghost-btn" href="../">Game menu</a>
         <a class="ghost-btn" href="../stats.html">Statistics</a>
         <button class="ghost-btn" id="switchProfileBtn" type="button">Switch player</button>
@@ -67,8 +70,12 @@
 
       <aside class="side-panel">
         <div class="panel-section">
-          <div class="section-heading">
-            <div><span id="wordThemeName">Cosmic set</span><h2>Target words</h2></div>
+          <div class="theme-showcase">
+            <span>Current theme</span>
+            <strong id="wordThemeName">Cosmic</strong>
+          </div>
+          <div class="section-heading target-heading">
+            <div><h2>Target words</h2></div>
             <div class="face-badge">3×3 × 6</div>
           </div>
           <p class="section-copy">The 3D cube uses the same 19 themes and 936+ theme words as the 2D game. Every tile belongs to exactly one target route, all 54 letters are covered, and every target has exactly one valid path.</p>
@@ -93,6 +100,23 @@
     </section>
   </main>
 
+  <div class="cube-loading show" id="cubeLoading" role="status" aria-live="polite" aria-busy="true">
+    <div class="cube-loading-card">
+      <div class="loader-cube-scene" aria-hidden="true">
+        <div class="loader-cube">
+          <span class="loader-face loader-front"></span>
+          <span class="loader-face loader-back"></span>
+          <span class="loader-face loader-right"></span>
+          <span class="loader-face loader-left"></span>
+          <span class="loader-face loader-top"></span>
+          <span class="loader-face loader-bottom"></span>
+        </div>
+      </div>
+      <strong id="cubeLoadingTitle">Building a new word cube…</strong>
+      <span id="cubeLoadingDetail">Choosing a theme and preparing unique routes</span>
+    </div>
+  </div>
+
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <div class="win" id="win" role="dialog" aria-modal="true" aria-labelledby="winTitle">
@@ -105,8 +129,8 @@
     </div>
   </div>
 
-  <script src="../themes.js?v=1.3.0"></script>
+  <script src="../themes.js?v=1.4.0"></script>
   <script src="../words.js"></script>
-  <script src="cube.js?v=1.3.0"></script>
+  <script src="cube.js?v=1.4.0"></script>
 </body>
 </html>
