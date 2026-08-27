@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const APP_VERSION = '0.6.0';
+  const APP_VERSION = '0.7.0';
   const GRID = 3;
   const FACE_NAMES = ['front','right','back','left','top','bottom'];
   const TILE_COUNT = FACE_NAMES.length * GRID * GRID;
@@ -10,6 +10,7 @@
   const BONUS_SCORE = 30;
   const MAX_SELECTION = 14;
   const PLANE = GRID / 2;
+  const CORE_PLANE = PLANE - 0.12;
   const TILE_HALF = 0.43;
   const CAMERA_Z = 6.7;
 
@@ -77,6 +78,7 @@
   let score = 0;
   let bonusScore = 0;
   let crossFaceFinds = 0;
+  let cubeCleared = false;
 
   let rotX = -22;
   let rotY = -32;
@@ -103,12 +105,12 @@
 
   const CANVAS_THEME = {
     dark:{
-      face:'#0d1b17',faceStroke:'rgba(101,223,195,.24)',tile:'#e9eee8',tileText:'#10201a',
+      face:'#2d3331',core:'#252a29',faceStroke:'rgba(101,223,195,.24)',tile:'#e9eee8',tileText:'#10201a',
       tileStroke:'rgba(9,27,21,.24)',selected:'#65dfc3',selectedStroke:'#d8fff4',
       solved:'#aee17f',solvedStroke:'#d8ffb9',invalid:'#ef9f96',pathUnder:'rgba(4,14,11,.88)'
     },
     light:{
-      face:'#dfe9e4',faceStroke:'rgba(33,111,90,.30)',tile:'#fbfdfa',tileText:'#173028',
+      face:'#555d5a',core:'#414744',faceStroke:'rgba(33,111,90,.30)',tile:'#fbfdfa',tileText:'#173028',
       tileStroke:'rgba(23,48,40,.24)',selected:'#55d7b9',selectedStroke:'#147e67',
       solved:'#b9e58f',solvedStroke:'#5d9634',invalid:'#ef9f96',pathUnder:'rgba(255,255,255,.96)'
     }
@@ -231,6 +233,62 @@
     return chosen;
   }
 
+
+  const COVER_ROUTE_COORDS = [
+    ['front',0,0],['front',0,1],['front',0,2],['front',1,2],['front',2,2],['front',1,1],['front',1,0],['front',2,0],['front',2,1],
+    ['bottom',0,1],['bottom',0,0],['bottom',1,0],['bottom',2,0],['bottom',2,1],['bottom',2,2],['bottom',1,1],['bottom',0,2],['bottom',1,2],
+    ['right',2,1],['right',2,0],['right',1,0],['right',0,0],['right',0,1],['right',0,2],['right',1,1],['right',1,2],['right',2,2],
+    ['back',2,0],['back',1,0],['back',0,0],['back',0,1],['back',0,2],['back',1,1],['back',1,2],['back',2,1],['back',2,2],
+    ['left',2,0],['left',1,0],['left',0,0],['left',0,1],['left',1,1],['left',2,1],['left',2,2],['left',1,2],['left',0,2],
+    ['top',2,0],['top',1,0],['top',0,0],['top',0,1],['top',0,2],['top',1,1],['top',1,2],['top',2,1],['top',2,2]
+  ];
+
+  function coverRoute(){
+    const lookup=new Map(nodes.map(n=>[`${n.face}:${n.row}:${n.col}`,n.id]));
+    const route=COVER_ROUTE_COORDS.map(([face,row,col])=>lookup.get(`${face}:${row}:${col}`));
+    if(route.length!==TILE_COUNT || route.some(id=>id===undefined) || new Set(route).size!==TILE_COUNT) return null;
+    for(let i=1;i<route.length;i++) if(!adjacency.get(route[i-1]).has(route[i])) return null;
+    return route;
+  }
+
+  function chooseCoverWords(total=TILE_COUNT){
+    const pool=shuffle([...new Set(SPACE_WORDS)].filter(w=>w.length>=4 && w.length<=8));
+    const states=new Map([[`0:0`,[]]]);
+    for(const word of pool){
+      const snapshot=[...states.entries()];
+      for(const [key,list] of snapshot){
+        const [sum,count]=key.split(':').map(Number);
+        if(count>=10) continue;
+        const next=sum+word.length;
+        if(next>total) continue;
+        const nextKey=`${next}:${count+1}`;
+        if(!states.has(nextKey)) states.set(nextKey,[...list,word]);
+      }
+    }
+    for(const count of [8,9,10,7]){
+      const hit=states.get(`${total}:${count}`);
+      if(hit) return shuffle(hit);
+    }
+    return null;
+  }
+
+  function buildFullCoverCandidate(words,baseRoute){
+    const route=Math.random()<0.5?[...baseRoute]:[...baseRoute].reverse();
+    const working=Array(TILE_COUNT).fill(''),paths=new Map();
+    let offset=0;
+    for(const word of words){
+      const path=route.slice(offset,offset+word.length);
+      if(path.length!==word.length) return null;
+      path.forEach((id,index)=>working[id]=word[index]);
+      paths.set(word,path);
+      offset+=word.length;
+    }
+    if(offset!==TILE_COUNT || working.some(letter=>!letter)) return null;
+    const covered=new Set([...paths.values()].flat());
+    if(covered.size!==TILE_COUNT) return null;
+    return {working,paths};
+  }
+
   function samePath(a,b){ return !!(a&&b) && a.length===b.length && a.every((id,i)=>id===b[i]); }
 
   function findWordPaths(word,candidateBoard,limit=2){
@@ -288,20 +346,23 @@
   }
 
   function generatePuzzle(){
-    for(let attempt=0;attempt<90;attempt++){
-      const working=Array(TILE_COUNT).fill('');
-      const words=chooseTargetWords().sort((a,b)=>b.length-a.length),paths=new Map();
-      let failed=false;
-      for(let i=0;i<words.length;i++){
-        const minFaces=i===0?3:i<4?2:1,path=findPlacement(words[i],minFaces,working);
-        if(!path){ failed=true; break; }
-        path.forEach((id,index)=>working[id]=words[i][index]); paths.set(words[i],path);
-      }
-      if(failed || !validateUniqueTargets(words,paths,working)) continue;
-      const filled=fillBoardWithoutDuplicateTargets(words,paths,working); if(!filled) continue;
-      board=filled; targets=words; targetPaths=paths; return;
+    const route=coverRoute();
+    if(!route) throw new Error('Full-cover cube route is invalid.');
+    for(let attempt=0;attempt<520;attempt++){
+      const words=chooseCoverWords();
+      if(!words) break;
+      const candidate=buildFullCoverCandidate(words,route);
+      if(!candidate) continue;
+      const {working,paths}=candidate;
+      const crossFaceCount=words.filter(word=>new Set(paths.get(word).map(id=>nodeById.get(id).face)).size>1).length;
+      if(crossFaceCount<3) continue;
+      if(!validateUniqueTargets(words,paths,working)) continue;
+      board=working;
+      targets=words;
+      targetPaths=paths;
+      return;
     }
-    throw new Error('Could not generate a unique-path cube puzzle.');
+    throw new Error('Could not generate a unique full-cover cube puzzle.');
   }
 
   function rotatePoint(p){
@@ -342,6 +403,28 @@
   function beginPoly(points){ ctx.beginPath(); ctx.moveTo(points[0].x,points[0].y); for(let i=1;i<points.length;i++) ctx.lineTo(points[i].x,points[i].y); ctx.closePath(); }
   function averageDepth(points){ return points.reduce((s,p)=>s+p.z,0)/points.length; }
   function edgeLength(points){ let total=0; for(let i=0;i<4;i++) total+=Math.hypot(points[i].x-points[(i+1)%4].x,points[i].y-points[(i+1)%4].y); return total/4; }
+
+
+  function coreFaceCornerPoints(face){
+    const d=FACE[face],p=CORE_PLANE;
+    return [
+      V.add(V.mul(d.n,p),V.add(V.mul(d.u,-p),V.mul(d.v,-p))),
+      V.add(V.mul(d.n,p),V.add(V.mul(d.u, p),V.mul(d.v,-p))),
+      V.add(V.mul(d.n,p),V.add(V.mul(d.u, p),V.mul(d.v, p))),
+      V.add(V.mul(d.n,p),V.add(V.mul(d.u,-p),V.mul(d.v, p)))
+    ];
+  }
+
+  function drawSolidCore(){
+    const t=canvasTheme();
+    const faces=FACE_NAMES.filter(face=>faceVisibility(face)>0.001)
+      .sort((a,b)=>averageDepth(coreFaceCornerPoints(a).map(projectPoint))-averageDepth(coreFaceCornerPoints(b).map(projectPoint)));
+    for(const face of faces){
+      const q=coreFaceCornerPoints(face).map(projectPoint);
+      beginPoly(q); ctx.fillStyle=t.core; ctx.fill();
+      ctx.lineWidth=2; ctx.strokeStyle='rgba(0,0,0,.22)'; ctx.stroke();
+    }
+  }
 
   function drawFaceBase(face){
     const p=canvasTheme(),q=faceCornerPoints(face).map(projectPoint); beginPoly(q); ctx.fillStyle=p.face; ctx.fill();
@@ -418,6 +501,8 @@
       const ux=right.x-left.x, uy=right.y-left.y;
       const vx=bottom.x-top.x, vy=bottom.y-top.y;
 
+      if(cubeCleared) continue;
+
       ctx.save();
       beginPoly(q);
       ctx.clip();
@@ -443,6 +528,7 @@
 
   function draw(){
     ctx.clearRect(0,0,canvasWidth,canvasHeight);
+    drawSolidCore();
     const visible=FACE_NAMES.filter(face=>faceVisibility(face)>0.015).sort((a,b)=>averageDepth(faceCornerPoints(a).map(projectPoint))-averageDepth(faceCornerPoints(b).map(projectPoint)));
     for(const face of visible) drawFaceBase(face);
     buildRenderedTiles(visible); drawTileShapes(); drawAllPaths(); drawTileLabels();
@@ -470,7 +556,7 @@
   }
 
   function newPuzzle(){
-    stopSelectionTimer(); selected=[]; foundTargets=new Set(); foundBonus=new Set(); foundPathByWord=new Map(); solvedNodes=new Set();
+    stopSelectionTimer(); selected=[]; foundTargets=new Set(); foundBonus=new Set(); foundPathByWord=new Map(); solvedNodes=new Set(); cubeCleared=false;
     score=0; bonusScore=0; crossFaceFinds=0; evaluating=false; winEl.classList.remove('show'); generatePuzzle(); renderTargets(); renderBonus(); updateSelectionUI(); updateStats(); resetView(false); draw(); toast(`New cube ready · v${APP_VERSION}`);
   }
 
@@ -479,9 +565,14 @@
   function selectTile(id){
     if(rotating || evaluating) return;
     const last=selected[selected.length-1];
-    if(selected.length>1 && selected[selected.length-2]===id){ selected.pop(); updateSelectionUI(); if(selected.length) startSelectionTimer(SELECTION_MS); else stopSelectionTimer(); draw(); return; }
-    if(last===id) return;
-    if(selected.includes(id)){ flashTile(id); toast('That tile is already in the path'); return; }
+    const selectedIndex=selected.indexOf(id);
+    if(selectedIndex>=0){
+      selected=selected.slice(0,selectedIndex);
+      updateSelectionUI();
+      if(selected.length) startSelectionTimer(SELECTION_MS); else stopSelectionTimer();
+      draw();
+      return;
+    }
     if(last!==undefined && !adjacency.get(last).has(id)){ flashTile(id); toast('Choose a touching tile'); return; }
     if(selected.length>=MAX_SELECTION){ toast(`Maximum path length is ${MAX_SELECTION}`); return; }
     selected.push(id); updateSelectionUI(); draw();
@@ -547,7 +638,7 @@
   }
 
   function updateStats(){ foundStat.textContent=`${foundTargets.size}/${targets.length}`; scoreStat.textContent=score.toLocaleString(); bonusStat.textContent=String(foundBonus.size); crossStat.textContent=String(crossFaceFinds); }
-  function showWin(){ winText.textContent=`You found all ${targets.length} words with ${crossFaceFinds} cross-face finds and scored ${score.toLocaleString()} points.`; winEl.classList.add('show'); }
+  function showWin(){ cubeCleared=true; draw(); winText.textContent=`You cleared all ${TILE_COUNT} letters by finding all ${targets.length} words, with ${crossFaceFinds} cross-face finds and ${score.toLocaleString()} points.`; setTimeout(()=>winEl.classList.add('show'),260); }
   function toast(message,type=''){ clearTimeout(toastTimer); toastEl.textContent=message; toastEl.className=`toast show ${type}`; toastTimer=setTimeout(()=>toastEl.className='toast',1900); }
 
   function onPointerDown(event){
