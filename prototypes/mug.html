@@ -4,20 +4,20 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" id="themeColorMeta" content="#f3f7f4" />
-  <title>Word Mug Prototype · v0.4.9</title>
-  <link rel="stylesheet" href="prototype.css?v=0.4.9" />
+  <title>Word Mug Prototype · v0.4.11</title>
+  <link rel="stylesheet" href="prototype.css?v=0.4.11" />
 </head>
 <body data-mode="mug">
   <main class="app-shell">
     <header class="topbar">
       <div>
-        <div class="eyebrow">3D prototype <span class="version-badge">v0.4.9</span></div>
+        <div class="eyebrow">3D prototype <span class="version-badge">v0.4.11</span></div>
         <h1>Word Mug</h1>
-        <p>The mug now uses the actual Three.js reference geometry from the approved shape prototype: tapered outer shell, separate inner wall, solid bottom, two-piece rim and side torus handle. The 6×6 playable grid sits directly on the curved front surface.</p>
+        <p>The mug now uses the proper smooth 3D reference model: a real tapered cup with rounded rim, inner wall, bottom, coffee and side handle. The 6×6 playable grid is made from 36 visibly separated curved tiles on the front surface.</p>
       </div>
       <div class="top-actions">
         <span class="prototype-badge">Prototype</span>
-        <span class="shape-badge">Reference 3D mug · 6 × 6 curved tiles</span>
+        <span class="shape-badge">6 × 6 · 36 curved front tiles</span>
         <a class="ghost-btn" href="index.html">Prototype menu</a>
         <a class="ghost-btn" href="../cube/">Word Cube</a>
         <button class="ghost-btn" id="themeBtn" type="button">Dark mode</button>
@@ -36,7 +36,7 @@
 
     <section class="game-layout">
       <div class="object-panel">
-        <div class="interaction-note"><span class="dot"></span>Drag empty space to rotate. Tap touching visible tiles. The model itself is now the Three.js mug from the supplied reference, while selection and path behaviour follow the Cube.</div>
+        <div class="interaction-note"><span class="dot"></span>Drag empty space as if the mug were fixed in the middle: move up to rotate up, move left to rotate left. Tap touching visible tiles to build a word.</div>
         <div class="stage" id="stage" aria-label="Interactive Word Mug">
           <canvas class="shape-canvas" id="gameCanvas"></canvas>
           <div class="rotate-hint hint-left">DRAG</div>
@@ -52,24 +52,24 @@
       <aside class="side-panel">
         <div class="panel-section">
           <div class="theme-showcase"><span>Current shape</span><strong>Mug</strong></div>
-          <div class="section-heading"><div><span>Prototype routes</span><h2>Target words</h2></div><div class="face-badge">Reference Three.js model</div></div>
-          <p class="section-copy">The body dimensions now come directly from the supplied reference: 1.60/1.48 outer radii, 1.43/1.33 inner radii, 3.15 body height, separate rim pieces and the 0.82 torus handle. The 36 playable cells are subdivided curved cylinder patches, not a flat board.</p>
+          <div class="section-heading"><div><span>Prototype routes</span><h2>Target words</h2></div><div class="face-badge">6 × 6 curved grid</div></div>
+          <p class="section-copy">This version follows the reference mug appearance. The object rotates around its own true centre, all 36 tiles are visibly separated, selected tiles use the same mint/green highlight language as the other prototypes, and the mug is filled with coffee.</p>
           <div class="target-list" id="targetList"></div>
         </div>
         <div class="howto">
           <strong>Controls</strong>
-          <p><b>Rotate:</b> drag empty space around the mug. Vertical rotation is constrained so the controls never flip over.</p>
+          <p><b>Rotate:</b> drag empty space like direct touch manipulation on a fixed 3D object. The timer pauses during rotation.</p>
           <p><b>Select:</b> the 6×6 grid uses the Cube's eight-neighbour rule, including diagonals.</p>
-          <p><b>Trail:</b> selected tiles turn mint and the rounded trail follows the same tapered mug radius between letters.</p>
+          <p><b>Trail:</b> selected tiles turn mint and the rounded trail stays attached to the curved mug surface.</p>
         </div>
-        <div class="prototype-note"><strong>Prototype v0.4.9.</strong> Only prototype files are changed. The actual Word Path game and Word Cube remain untouched.</div>
+        <div class="prototype-note"><strong>Prototype v0.4.11.</strong> Only the prototype files are being developed here. The actual game remains unchanged.</div>
       </aside>
     </section>
   </main>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <div class="win" id="win" role="dialog" aria-modal="true"><div class="win-card"><div class="win-mark">✓</div><div class="eyebrow">Prototype complete</div><h2>Shape solved.</h2><p id="winText"></p><button class="primary-btn" id="nextBtn" type="button">Generate next prototype</button></div></div>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
-  <script src="mug-three.js?v=0.4.9"></script>
+  <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+  <script src="mug-three.js?v=0.4.11"></script>
 </body>
 </html>
