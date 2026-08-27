@@ -371,7 +371,7 @@
     <div class="topbar">
       <div>
         <h1 class="game-title">Anitas Word Path</h1>
-        <p class="subtitle">No time limit. Recognition happens only after the selection pause expires. Correct target spellings are accepted even if more than one valid route exists.</p>
+        <p class="subtitle">No time limit. Recognition happens only after the selection pause expires. Every target word is generated with one unique valid path.</p>
       </div>
       <div class="stats">
         <div class="stat"><b id="score">0</b><span>Score</span></div>
@@ -996,45 +996,26 @@
     chooseTheme();
 
     /*
-      Important:
-      A target word should ideally have only ONE possible spelling path in
-      the finished board. The generator therefore checks the complete board
-      after creation and regenerates it when a target can be traced in more
-      than one way.
-
-      Short words are naturally more likely to occur accidentally, especially
-      on 9×9 and 12×12 boards, so after a bounded number of attempts we use
-      the board with the fewest duplicates. Recognition is still forgiving:
-      ANY correctly spelled target path is accepted by the game.
+      Every target word MUST have exactly one valid spelling path in the
+      finished board. If even one target can be traced in a second way, the
+      entire candidate is rejected. This prevents a same-letter tile from a
+      neighbouring word segment from becoming an alternative valid ending.
     */
-    const boardAttempts=SIZE===6?24:SIZE===9?16:10;
-
-    let best=null;
+    const boardAttempts=SIZE===6?80:SIZE===9?48:24;
 
     for(let attempt=0;attempt<boardAttempts;attempt++){
       const selectedWords=selectWordsExact(currentTheme.words,CELL_COUNT);
       const candidate=makeBoardCandidate(selectedWords);
 
-      if(
-        !best ||
-        candidate.duplicateScore<best.duplicateScore
-      ){
-        best={
-          ...candidate,
-          selectedWords
-        };
-      }
+      if(candidate.duplicateScore!==0)continue;
 
-      if(candidate.duplicateScore===0){
-        break;
-      }
+      board=candidate.grid;
+      targets=shuffle(selectedWords);
+      intendedPaths=candidate.paths;
+      return;
     }
 
-    if(!best)throw new Error("Could not generate puzzle.");
-
-    board=best.grid;
-    targets=shuffle(best.selectedWords);
-    intendedPaths=best.paths;
+    throw new Error("Could not generate a puzzle with unique target paths.");
   }
   function renderBoard(){
     boardEl.innerHTML="";
@@ -1109,6 +1090,12 @@
     return{x:cr.left-wr.left+cr.width/2,y:cr.top-wr.top+cr.height/2};
   }
 
+  function trailWidth(){
+    const cell=boardEl.children[0]?.getBoundingClientRect();
+    const ratio=SIZE===6?.65:SIZE===9?.62:.60;
+    return Math.max(16,(cell?.width||50)*ratio);
+  }
+
   function makePolyline(points,stroke,opacity=1){
     if(!points.length)return null;
     const ns="http://www.w3.org/2000/svg";
@@ -1116,13 +1103,23 @@
     p.setAttribute("points",points.map(pt=>`${pt.x},${pt.y}`).join(" "));
     p.setAttribute("fill","none");
     p.setAttribute("stroke",stroke);
-    const cell=boardEl.children[0]?.getBoundingClientRect();
-    const ratio=SIZE===6?.65:SIZE===9?.62:.60;
-    p.setAttribute("stroke-width",Math.max(16,(cell?.width||50)*ratio));
+    p.setAttribute("stroke-width",trailWidth());
     p.setAttribute("stroke-linecap","round");
     p.setAttribute("stroke-linejoin","round");
     p.setAttribute("opacity",opacity);
     return p;
+  }
+
+  function makeTrailDot(point,fill,opacity=1){
+    if(!point)return null;
+    const ns="http://www.w3.org/2000/svg";
+    const circle=document.createElementNS(ns,"circle");
+    circle.setAttribute("cx",point.x);
+    circle.setAttribute("cy",point.y);
+    circle.setAttribute("r",trailWidth()/2);
+    circle.setAttribute("fill",fill);
+    circle.setAttribute("opacity",opacity);
+    return circle;
   }
 
   function drawPaths(){
@@ -1137,9 +1134,11 @@
       if(poly)svgEl.appendChild(poly);
     });
 
-    /* Every active selection gets exactly the same trail, regardless of
-       whether it will later be valid, invalid, target, or bonus. */
-    if(selected.length){
+    /* A one-cell selection gets the same visible trail cap as a longer path. */
+    if(selected.length===1){
+      const dot=makeTrailDot(cellCenter(selected[0]),"#59c9c4",.72);
+      if(dot)svgEl.appendChild(dot);
+    }else if(selected.length>1){
       const poly=makePolyline(selected.map(cellCenter),"#59c9c4",.72);
       if(poly)svgEl.appendChild(poly);
     }
@@ -1148,14 +1147,12 @@
   function findTargetFromSelection(){
     const word=selectedWord();
 
-    /*
-      A theme word is recognised by its spelling, not by one hidden
-      "official" route. This prevents the frustrating case where the player
-      writes the correct word but chooses another equally valid last letter.
-      The generator still tries to make each target appear only once.
-    */
     if(!targets.includes(word))return null;
     if(foundTargets.has(word))return null;
+
+    /* Safety net: only the exact generator-assigned path may lock a target. */
+    const intended=intendedPaths.get(word);
+    if(!samePath(selected,intended))return null;
 
     return word;
   }
