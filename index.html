@@ -171,6 +171,10 @@
       cursor:pointer;
     }
 
+
+    a.btn{text-decoration:none}
+    .mode-button.stats-link{text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+
     .layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
     .game-card,.side-card{
       background:rgba(255,255,255,.92);
@@ -394,7 +398,7 @@
   </section>
 
   <section class="start-screen hidden" id="startScreen">
-    <div class="player-bar"><div><strong id="startPlayerName">Player</strong><span>Local profile</span></div><button class="btn secondary" id="switchProfileStartBtn" type="button">Switch player</button></div>
+    <div class="player-bar"><div><strong id="startPlayerName">Player</strong><span>Local profile</span></div><div style="display:flex;gap:7px;flex-wrap:wrap"><a class="btn secondary" href="stats.html">Statistics</a><button class="btn secondary" id="switchProfileStartBtn" type="button">Switch player</button></div></div>
     <div class="start-kicker">Offline word game</div>
     <h1>Anitas Word Path</h1>
     <p class="start-intro">
@@ -480,6 +484,7 @@
       <div class="theme-right">
         <span class="player-pill" id="gamePlayerName">Player</span>
         <span class="mode-pill" id="modePill">6×6 · Beginner</span>
+        <a class="mode-button stats-link" href="stats.html">Statistics</a>
         <button class="mode-button" id="switchProfileGameBtn" type="button">Switch player</button>
         <button class="mode-button" id="soundBtn" type="button">Sound on</button>
         <button class="mode-button" id="changeModeBtn" type="button">Change mode</button>
