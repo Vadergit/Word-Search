@@ -17,6 +17,19 @@ jobs:
         with:
           ref: main
 
+      - name: Fix patch anchor
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('patch_integrated_v100.py')
+          text=p.read_text()
+          old="cube_html = rep(cube_html, '<script src=\"../words.js\"></script>\\n  <script src=\"cube.js?v=1.0.0\"></script>', '<script src=\"../themes.js?v=1.0.0\"></script>\\n  <script src=\"../words.js\"></script>\\n  <script src=\"cube.js?v=1.0.0\"></script>', 'cube shared theme script')"
+          new="cube_html = rep(cube_html, '<script src=\"../words.js\"></script>', '<script src=\"../themes.js?v=1.0.0\"></script>\\n  <script src=\"../words.js\"></script>', 'cube shared theme script')"
+          if old not in text:
+              raise SystemExit('Could not find cube script anchor in integration patch')
+          p.write_text(text.replace(old,new,1))
+          PY
+
       - name: Apply integration
         run: python3 patch_integrated_v100.py
 
