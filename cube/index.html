@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#091311" />
+  <title>Anitas Word Cube</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23091311'/%3E%3Cg fill='none' stroke='%2359c9c4' stroke-width='5' stroke-linecap='round'%3E%3Cpath d='M18 18h14v14H18zM32 32h14v14H32zM25 25l14 14'/%3E%3C/g%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="cube.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">3D prototype</div>
+        <h1>Anitas Word Cube</h1>
+        <p>Find words across a rotatable 4×4 cube. Paths may continue over cube edges onto another face.</p>
+      </div>
+      <div class="top-actions">
+        <a class="ghost-btn" href="../">2D game</a>
+        <button class="ghost-btn" id="resetViewBtn" type="button">Reset view</button>
+        <button class="primary-btn small" id="newBtn" type="button">New cube</button>
+      </div>
+    </header>
+
+    <section class="stats-row" aria-label="Game statistics">
+      <div class="stat-card"><span>Found</span><strong id="foundStat">0/0</strong></div>
+      <div class="stat-card"><span>Score</span><strong id="scoreStat">0</strong></div>
+      <div class="stat-card"><span>Bonus</span><strong id="bonusStat">0</strong></div>
+      <div class="stat-card"><span>Cross-face</span><strong id="crossStat">0</strong></div>
+    </section>
+
+    <section class="game-layout">
+      <div class="cube-panel">
+        <div class="interaction-note">
+          <span class="dot"></span>
+          Drag the empty space around the cube to rotate it. Tap tiles to build a word.
+        </div>
+
+        <div class="stage" id="stage" aria-label="3D word cube rotation area">
+          <div class="rotate-hint hint-left">DRAG</div>
+          <div class="rotate-hint hint-right">TO ROTATE</div>
+
+          <div class="cube-shell">
+            <div class="cube" id="cube">
+              <section class="face front" data-face="front"><div class="face-label">FRONT</div><div class="face-grid"></div></section>
+              <section class="face right" data-face="right"><div class="face-label">RIGHT</div><div class="face-grid"></div></section>
+              <section class="face back" data-face="back"><div class="face-label">BACK</div><div class="face-grid"></div></section>
+              <section class="face left" data-face="left"><div class="face-label">LEFT</div><div class="face-grid"></div></section>
+              <section class="face top" data-face="top"><div class="face-label">TOP</div><div class="face-grid"></div></section>
+              <section class="face bottom" data-face="bottom"><div class="face-label">BOTTOM</div><div class="face-grid"></div></section>
+            </div>
+          </div>
+        </div>
+
+        <div class="selection-card">
+          <div class="selection-copy">
+            <span>Current path</span>
+            <strong id="currentWord">Tap a tile to start</strong>
+            <small id="selectionMeta">8 seconds after every tile · or press Check word</small>
+          </div>
+          <div class="timer-track" aria-hidden="true"><div id="timerBar"></div></div>
+          <div class="selection-actions">
+            <button class="secondary-btn" id="clearBtn" type="button" disabled>Clear</button>
+            <button class="primary-btn" id="checkBtn" type="button" disabled>Check word</button>
+          </div>
+        </div>
+      </div>
+
+      <aside class="side-panel">
+        <div class="panel-section">
+          <div class="section-heading">
+            <div><span>Cosmic set</span><h2>Target words</h2></div>
+            <div class="face-badge">4×4 × 6</div>
+          </div>
+          <p class="section-copy">Every cube contains words that deliberately cross one or more faces. Tiles must touch; diagonal moves are allowed on the same face.</p>
+          <div class="target-list" id="targetList"></div>
+        </div>
+
+        <div class="panel-section bonus-section">
+          <div class="section-heading compact"><div><span>Extra points</span><h2>Bonus words</h2></div></div>
+          <div class="bonus-list" id="bonusList"></div>
+        </div>
+
+        <div class="howto">
+          <strong>Controls</strong>
+          <p><b>Rotate:</b> drag beside the cube with mouse or touch. The word timer pauses while you rotate.</p>
+          <p><b>Select:</b> tap touching tiles. Tap the previous tile to undo one step.</p>
+          <p><b>Finish:</b> wait 8 seconds or use <em>Check word</em>. Escape clears the path.</p>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <div class="win" id="win" role="dialog" aria-modal="true" aria-labelledby="winTitle">
+    <div class="win-card">
+      <div class="win-mark">✓</div>
+      <div class="eyebrow">Cube complete</div>
+      <h2 id="winTitle">Nice route.</h2>
+      <p id="winText"></p>
+      <button class="primary-btn" id="nextCubeBtn" type="button">Generate next cube</button>
+    </div>
+  </div>
+
+  <script src="../words.js"></script>
+  <script src="cube.js"></script>
+</body>
+</html>
