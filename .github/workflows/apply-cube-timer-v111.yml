@@ -1,0 +1,46 @@
+name: Apply Cube timer pause v1.1.1
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-cube-timer-v111.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Apply timer pause fix
+        run: python3 patch_cube_timer_v111.py
+
+      - name: Validate JavaScript
+        run: |
+          node --check cube/cube.js
+          git diff --check
+
+      - name: Validate timer pause requirements
+        run: |
+          grep -q "const APP_VERSION = '1.1.1';" cube/cube.js
+          grep -q 'Timer paused while rotating' cube/cube.js
+          grep -q 'setTimerBarImmediate' cube/cube.js
+          grep -q 'lostpointercapture' cube/cube.js
+          grep -q "window.addEventListener('blur'" cube/cube.js
+          grep -q 'v1.1.1' cube/index.html
+          grep -q 'cube.js?v=1.1.1' cube/index.html
+          grep -q 'Word game suite · v1.1.1' index.html
+
+      - name: Commit v1.1.1
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html cube/index.html cube/cube.js
+          git diff --cached --quiet && exit 0
+          git commit -m 'Pause Cube timer while rotating v1.1.1'
+          git push origin HEAD:main
