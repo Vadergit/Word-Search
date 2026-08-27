@@ -1,1 +1,94 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Word Pyramid Prototype · v0.2.0</title><link rel="stylesheet" href="prototype.css?v=0.2.0"></head><body data-mode="pyramid"><main class="shell"><header class="topbar"><div><div class="eyebrow">3D prototype <span class="version">v0.2.0</span></div><h1>Word Pyramid</h1><p class="lead">True WebGL tetrahedron with four shaded faces and physical letter tiles mounted on the surfaces.</p></div><div class="actions"><a class="btn" href="index.html">Prototypes</a><a class="btn" href="../cube/">Word Cube</a><button class="btn primary" id="newBtn">New prototype</button></div></header><section class="layout"><div class="game-card"><div class="note">True 3D prototype: tap touching tiles to build a target word. Drag empty space to rotate the tetrahedron.</div><div class="stage"><canvas id="gameCanvas"></canvas><div class="rotate-tag">DRAG EMPTY SPACE TO ROTATE</div></div><div class="selection"><div><span>Current path</span><strong id="currentWord">Tap a tile to start</strong></div><div class="sel-actions"><button class="btn" id="clearBtn" disabled>Clear</button></div></div></div><aside class="side"><span class="shape-badge">Pyramid prototype</span><h2>Target words</h2><p>Four actual triangular 3D faces with 40 letter tiles mounted on the tetrahedron surface. Face shading and real object edges make the depth and rotation clearly visible.</p><div class="targets" id="targets"></div><div class="stats"><div class="stat"><span>Found</span><strong id="foundStat">0/0</strong></div><div class="stat"><span>Tiles</span><strong id="tileStat">40</strong></div></div><div class="proto"><strong>Prototype v0.2.0.</strong> Real WebGL geometry is now used. Puzzle generation is still intentionally simplified.</div></aside></section></main><div class="toast" id="toast"></div><script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script><script src="prototype.js?v=0.2.0"></script></body></html>
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" id="themeColorMeta" content="#f3f7f4" />
+  <title>Word Pyramid Prototype · v0.3.0</title>
+  <link rel="stylesheet" href="prototype.css?v=0.3.0" />
+</head>
+<body data-mode="pyramid">
+  <main class="app-shell">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">3D prototype <span class="version-badge">v0.3.0</span></div>
+        <h1>Word Pyramid</h1>
+        <p>A rotatable four-face word pyramid with real shaded faces, surface-mounted tiles and trails that continue across pyramid edges.</p>
+      </div>
+      <div class="top-actions">
+        <span class="prototype-badge">Prototype</span>
+        <span class="shape-badge">4 faces · 40 tiles</span>
+        <a class="ghost-btn" href="index.html">Prototype menu</a>
+        <a class="ghost-btn" href="../cube/">Word Cube</a>
+        <button class="ghost-btn" id="themeBtn" type="button">Dark mode</button>
+        <button class="ghost-btn" id="resetViewBtn" type="button">Reset view</button>
+        <button class="primary-btn small" id="newBtn" type="button">New prototype</button>
+      </div>
+    </header>
+
+    <section class="stats-row" aria-label="Prototype statistics">
+      <div class="stat-card"><span>Found</span><strong id="foundStat">0/0</strong></div>
+      <div class="stat-card"><span>Score</span><strong id="scoreStat">0</strong></div>
+      <div class="stat-card"><span>Tiles</span><strong id="tileStat">0</strong></div>
+      <div class="stat-card"><span>Route type</span><strong id="routeStat">3D</strong></div>
+      <div class="stat-card"><span>Time</span><strong id="elapsedStat">00:00.0</strong></div>
+    </section>
+
+    <section class="game-layout">
+      <div class="object-panel">
+        <div class="interaction-note"><span class="dot"></span>Drag empty space to rotate. Tap touching visible tiles. Paths can move across pyramid edges.</div>
+        <div class="stage" id="stage" aria-label="Interactive Word Pyramid">
+          <canvas class="shape-canvas" id="gameCanvas"></canvas>
+          <div class="rotate-hint hint-left">DRAG</div>
+          <div class="rotate-hint hint-right">TO ROTATE</div>
+        </div>
+
+        <div class="selection-card">
+          <div class="selection-copy">
+            <span>Current path</span>
+            <strong id="currentWord">Tap a tile to start</strong>
+            <small id="selectionMeta">8 seconds after every tile · or press Check word</small>
+          </div>
+          <div class="timer-track" aria-hidden="true"><div id="timerBar"></div></div>
+          <div class="selection-actions">
+            <button class="secondary-btn" id="clearBtn" type="button" disabled>Clear</button>
+            <button class="primary-btn" id="checkBtn" type="button" disabled>Check word</button>
+          </div>
+        </div>
+      </div>
+
+      <aside class="side-panel">
+        <div class="panel-section">
+          <div class="theme-showcase"><span>Current shape</span><strong>Pyramid</strong></div>
+          <div class="section-heading">
+            <div><span>Prototype routes</span><h2>Target words</h2></div>
+            <div class="face-badge">4 faces · 40 tiles</div>
+          </div>
+          <p class="section-copy">Forty square letter tiles sit directly on four triangular faces. Cross-edge routes and persistent trails are rendered in the same visual language as the Word Cube.</p>
+          <div class="target-list" id="targetList"></div>
+        </div>
+        <div class="howto">
+          <strong>Controls</strong>
+          <p><b>Rotate:</b> drag empty space around the object. The 8-second word timer pauses while rotating.</p>
+          <p><b>Select:</b> tap touching visible tiles. The mint trail follows your path directly on the 3D surface.</p>
+          <p><b>Found words:</b> stay visible as a green trail, just like the original Word Cube.</p>
+        </div>
+        <div class="prototype-note"><strong>Prototype v0.3.0.</strong> Rendering, tiles, trails, rotation and interface now deliberately follow the original Word Cube. Puzzle generation remains simplified until the shape mechanics are approved.</div>
+      </aside>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div class="win" id="win" role="dialog" aria-modal="true">
+    <div class="win-card">
+      <div class="win-mark">✓</div>
+      <div class="eyebrow">Prototype complete</div>
+      <h2>Shape solved.</h2>
+      <p id="winText"></p>
+      <button class="primary-btn" id="nextBtn" type="button">Generate next prototype</button>
+    </div>
+  </div>
+
+  <script src="prototype.js?v=0.3.0"></script>
+</body>
+</html>
