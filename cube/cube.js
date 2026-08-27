@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const APP_VERSION = '0.7.0';
+  const APP_VERSION = '0.7.1';
   const GRID = 3;
   const FACE_NAMES = ['front','right','back','left','top','bottom'];
   const TILE_COUNT = FACE_NAMES.length * GRID * GRID;
@@ -470,14 +470,34 @@
     return [{face:a.face,a:a.pos,b:edge},{face:b.face,a:edge,b:b.pos}];
   }
 
-  function drawSegment(a,b,color,width){
-    const p1=projectPoint(a),p2=projectPoint(b); ctx.lineCap='round'; ctx.lineJoin='round';
-    ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.strokeStyle=canvasTheme().pathUnder; ctx.lineWidth=width+10; ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.strokeStyle=color; ctx.lineWidth=width; ctx.shadowColor=color; ctx.shadowBlur=8; ctx.stroke(); ctx.shadowBlur=0;
+  function facePathWidth(face,baseWidth){
+    const q=faceCornerPoints(face).map(projectPoint);
+    const top=Math.hypot(q[1].x-q[0].x,q[1].y-q[0].y);
+    const bottom=Math.hypot(q[2].x-q[3].x,q[2].y-q[3].y);
+    const left=Math.hypot(q[3].x-q[0].x,q[3].y-q[0].y);
+    const right=Math.hypot(q[2].x-q[1].x,q[2].y-q[1].y);
+    const tileMinor=Math.min((top+bottom)/2,(left+right)/2)/GRID;
+    return Math.min(baseWidth,Math.max(3,tileMinor*.34));
+  }
+
+  function drawSegmentOnFace(face,a,b,color,baseWidth){
+    const q=faceCornerPoints(face).map(projectPoint);
+    const p1=projectPoint(a),p2=projectPoint(b),width=facePathWidth(face,baseWidth);
+    ctx.save();
+    beginPoly(q);
+    ctx.clip();
+    ctx.lineCap='round'; ctx.lineJoin='round';
+    ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.strokeStyle=canvasTheme().pathUnder; ctx.lineWidth=width+Math.max(4,width*.58); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.strokeStyle=color; ctx.lineWidth=width; ctx.shadowColor=color; ctx.shadowBlur=Math.min(8,width*.6); ctx.stroke();
+    ctx.restore();
   }
 
   function drawPath(path,color,width){
-    for(let i=1;i<path.length;i++) for(const part of pathParts(path[i-1],path[i])) if(faceVisibility(part.face)>0.025) drawSegment(part.a,part.b,color,width);
+    for(let i=1;i<path.length;i++){
+      for(const part of pathParts(path[i-1],path[i])){
+        if(faceVisibility(part.face)>0.025) drawSegmentOnFace(part.face,part.a,part.b,color,width);
+      }
+    }
   }
 
   function drawAllPaths(){ foundPathByWord.forEach(path=>drawPath(path,'#9bd866',15)); if(selected.length>1) drawPath(selected,'#65dfc3',17); }
@@ -503,6 +523,9 @@
 
       if(cubeCleared) continue;
 
+      const minorAxis=Math.min(Math.hypot(ux,uy),Math.hypot(vx,vy));
+      if(faceVisibility(tile.face)<0.10 || minorAxis<10) continue;
+
       ctx.save();
       beginPoly(q);
       ctx.clip();
@@ -514,16 +537,7 @@
       ctx.fillText(board[tile.id],0,0.03);
       ctx.restore();
       ctx.setTransform(dpr,0,0,dpr,0,0);
-
-      const step=selected.indexOf(tile.id);
-      if(step>=0) drawBadge(tile,step+1,'#0b1a15','#b9ffe9'); else if(solvedNodes.has(tile.id)) drawBadge(tile,'✓','#24411a','#eaffd8');
     }
-  }
-
-  function drawBadge(tile,label,bg,fg){
-    const c=tile.quad[1],r=Math.max(8,Math.min(12,tile.size*0.11));
-    ctx.beginPath(); ctx.arc(c.x-r*0.9,c.y+r*0.9,r,0,Math.PI*2); ctx.fillStyle=bg; ctx.fill();
-    ctx.font=`900 ${Math.max(8,r*.9)}px Inter,system-ui,sans-serif`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillStyle=fg; ctx.fillText(String(label),c.x-r*0.9,c.y+r*0.9+.5);
   }
 
   function draw(){

@@ -1830,20 +1830,22 @@
     }
 
     const last=selected[selected.length-1];
+    const selectedIndex=selected.indexOf(idx);
 
-    if(idx===last){
-      startAutoReset();
-      return;
-    }
-
-    if(selected.length>=2&&idx===selected[selected.length-2]){
-      selected.pop();
+    if(selectedIndex>=0){
+      selected=selected.slice(0,selectedIndex);
       updateSelectionUI();
-      startAutoReset();
+      if(selected.length)startAutoReset();
+      else{
+        clearTimeout(resetTimer);
+        resetTimer=null;
+        timeoutBar.style.transition="none";
+        timeoutBar.style.width="0%";
+      }
       return;
     }
 
-    if(!isAdjacent(last,idx)||selected.includes(idx)){
+    if(!isAdjacent(last,idx)){
       selected=[idx];
       updateSelectionUI();
       startAutoReset();
