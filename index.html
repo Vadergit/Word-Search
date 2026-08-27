@@ -419,6 +419,7 @@
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:-16px;margin-bottom:22px;">
       <span style="padding:6px 9px;border-radius:999px;background:#f1f5f1;border:1px solid #e1e8e1;font-size:11px;font-weight:800;color:#5f6d64;">19 themes</span>
       <span style="padding:6px 9px;border-radius:999px;background:#f1f5f1;border:1px solid #e1e8e1;font-size:11px;font-weight:800;color:#5f6d64;">879+ theme words</span>
+      <span style="padding:6px 9px;border-radius:999px;background:#f1f5f1;border:1px solid #e1e8e1;font-size:11px;font-weight:800;color:#5f6d64;">20k+ bonus words</span>
       <span style="padding:6px 9px;border-radius:999px;background:#f1f5f1;border:1px solid #e1e8e1;font-size:11px;font-weight:800;color:#5f6d64;">100% offline</span>
     </div>
 
@@ -594,6 +595,7 @@
   </div>
 </div>
 
+<script src="words.js"></script>
 <script>
 (() => {
   const RESET_DELAY = 1500;
@@ -601,6 +603,7 @@
   const TARGET_POINTS_PER_LETTER = 100;
   const BONUS_POINTS_PER_LETTER = 35;
   const MIN_BONUS_LENGTH = 3;
+  const ENGLISH_WORDS = window.ANITAS_ENGLISH_WORDS instanceof Set ? window.ANITAS_ENGLISH_WORDS : new Set();
 
   /* Large offline theme pools. The generator selects a unique subset whose
      total letter count exactly matches the selected grid (36 / 81 / 144). */
@@ -1779,7 +1782,7 @@
       return;
     }
 
-    if(word.length>=MIN_BONUS_LENGTH&&BONUS_WORDS.has(word)&&!targets.includes(word)){
+    if(word.length>=MIN_BONUS_LENGTH&&(BONUS_WORDS.has(word)||ENGLISH_WORDS.has(word))&&!targets.includes(word)){
       if(!foundBonus.has(word)){
         foundBonus.add(word);
         bonusChain++;
@@ -1898,7 +1901,7 @@
     if(!words.length){
       const empty=document.createElement("span");
       empty.style.cssText="font-size:12px;color:#879087";
-      empty.textContent="Extra English words score bonus points.";
+      empty.textContent=`Expanded offline dictionary · ${ENGLISH_WORDS.size.toLocaleString()} words available for bonus points.`;
       bonusListEl.appendChild(empty);
       return;
     }
