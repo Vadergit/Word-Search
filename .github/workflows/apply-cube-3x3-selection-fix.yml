@@ -1,0 +1,37 @@
+name: Apply cube 3x3 selection fix
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-cube-3x3-selection-fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Apply cube test fixes
+        run: python patch_cube_3x3_selection.py
+      - name: Validate cube files
+        run: |
+          node --check cube/cube.js
+          git diff --check
+          grep -q 'const GRID = 3;' cube/cube.js
+          grep -q "btn.addEventListener('pointerdown'" cube/cube.js
+          grep -q 'targets.includes(candidate)' cube/cube.js
+          grep -q 'repeat(3,1fr)' cube/cube.css
+          grep -q '3×3 × 6' cube/index.html
+          ! grep -q 'rotatable 4×4 cube' cube/index.html
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add cube/index.html cube/cube.css cube/cube.js
+          git commit -m "Fix cube tile selection and switch prototype to 3x3"
+          git push origin HEAD:main
