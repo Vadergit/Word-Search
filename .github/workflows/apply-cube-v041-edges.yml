@@ -1,0 +1,36 @@
+name: Apply cube v0.4.1 edge mapping
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-cube-v041-edges.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Apply v0.4.1 edge mapping
+        run: python patch_cube_v041_edges.py
+      - name: Validate
+        run: |
+          node --check cube/cube.js
+          git diff --check
+          grep -q "const APP_VERSION = '0.4.1';" cube/cube.js
+          grep -q "case 'top': return \[v\[col\], -plane, v\[row\]\];" cube/cube.js
+          grep -q 'function validateCrossFaceGeometry()' cube/cube.js
+          grep -q 'v0.4.1' cube/index.html
+          ! grep -q 'v0.4.0' cube/index.html
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add cube/index.html cube/cube.js
+          git commit -m "Cube v0.4.1: align edge selection with rendered geometry"
+          git push origin HEAD:main
