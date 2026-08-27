@@ -36,24 +36,43 @@ jobs:
 
       - name: Validate difficulty requirements
         run: |
-          grep -q 'Word game suite · v1.1.0' index.html
-          grep -q 'difficultySetting.classList.remove("hidden")' index.html
-          grep -q 'anitasWordCubeDifficulty' index.html
-          grep -q 'Start 3D cube' index.html
-          grep -q "const APP_VERSION = '1.1.0';" cube/cube.js
-          grep -q 'CUBE_DIFFICULTIES' cube/cube.js
-          grep -q "beginner:{label:'Beginner'" cube/cube.js
-          grep -q "middle:{label:'Middle'" cube/cube.js
-          grep -q "hard:{label:'Hard'" cube/cube.js
-          grep -q 'Hint tiles highlighted' cube/cube.js
-          grep -q "cubeDifficulty==='hard'" cube/cube.js
-          grep -q 'cubeDifficultyBadge' cube/index.html
-          grep -q 'id="hintBtn"' cube/index.html
-          grep -q 'v1.1.0' cube/index.html
-          grep -q 'cube.css?v=1.1.0' cube/index.html
-          grep -q 'cube.js?v=1.1.0' cube/index.html
-          grep -q "let saved='light'" cube/cube.js
-          grep -q "let currentTheme = 'light'" cube/cube.js
+          python3 - <<'PY'
+          from pathlib import Path
+          checks={
+            'index.html':[
+              'Word game suite · v1.1.0',
+              'difficultySetting.classList.remove("hidden")',
+              'anitasWordCubeDifficulty',
+              'Start 3D cube',
+            ],
+            'cube/cube.js':[
+              "const APP_VERSION = '1.1.0';",
+              'CUBE_DIFFICULTIES',
+              "beginner:{label:'Beginner'",
+              "middle:{label:'Middle'",
+              "hard:{label:'Hard'",
+              'Hint tiles highlighted',
+              "cubeDifficulty==='hard'",
+              "let saved='light'",
+              "let currentTheme = 'light'",
+            ],
+            'cube/index.html':[
+              'cubeDifficultyBadge',
+              'id="hintBtn"',
+              'v1.1.0',
+              'cube.css?v=1.1.0',
+              'cube.js?v=1.1.0',
+            ],
+          }
+          missing=[]
+          for path,needles in checks.items():
+            text=Path(path).read_text()
+            for needle in needles:
+              ok=needle in text
+              print(('OK  ' if ok else 'MISS'),path,repr(needle))
+              if not ok: missing.append((path,needle))
+          assert not missing, missing
+          PY
 
       - name: Validate shared themes can fill all difficulties
         run: |
