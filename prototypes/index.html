@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#f3f7f4" />
-  <title>Word Shape Prototypes · v0.4.9</title>
-  <link rel="stylesheet" href="prototype.css?v=0.4.9" />
+  <title>Word Shape Prototypes · v0.4.14</title>
+  <link rel="stylesheet" href="prototype.css?v=0.4.14" />
   <style>
     .prototype-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:18px}
     .prototype-card{background:rgba(255,255,255,.82);border:1px solid var(--line);border-radius:24px;padding:18px;box-shadow:var(--shadow)}
@@ -19,7 +19,7 @@
   <main class="app-shell">
     <header class="topbar">
       <div>
-        <div class="eyebrow">3D prototype playground <span class="version-badge">v0.4.9</span></div>
+        <div class="eyebrow">3D prototype playground <span class="version-badge">v0.4.14</span></div>
         <h1>Word Shape Prototypes</h1>
         <p>Shape geometry is developed only in this prototype area. Selection, touching rules, backtracking, timer behaviour and mint/green trails deliberately follow the original Word Cube.</p>
       </div>
@@ -40,12 +40,12 @@
       </article>
       <article class="prototype-card">
         <div class="preview"><div class="preview-label">☕</div></div>
-        <span class="shape-badge">Reference Three.js mug · 36 tiles</span><h2>Word Mug</h2>
-        <p>The mug now uses the supplied Three.js reference model directly: tapered shell, inner wall, solid bottom, two-piece rim and torus handle, with curved playable patches on the front.</p>
-        <div class="card-actions"><a class="primary-btn" href="mug.html">Play prototype</a></div>
+        <span class="shape-badge">Self-contained Mug · 36 tiles</span><h2>Word Mug</h2>
+        <p>The Mug now uses the same local renderer as Pyramid and Orb. No external CDN is required, so Safari loads it reliably while keeping the tapered body, coffee, handle and curved tiles.</p>
+        <div class="card-actions"><a class="primary-btn" href="mug.html?v=0.4.14">Play prototype</a></div>
       </article>
     </section>
-    <div class="prototype-note"><strong>v0.4.9 focus:</strong> reference Mug model and stable non-inverting rotation. No changes are made to the actual Word Path or Word Cube implementation.</div>
+    <div class="prototype-note"><strong>v0.4.14:</strong> the Mug renderer is now self-contained and Safari-safe. No changes are made to the actual Word Path game.</div>
   </main>
 </body>
 </html>
