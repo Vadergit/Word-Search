@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const APP_VERSION = '0.4.2';
+  const APP_VERSION = '0.4.3';
   const FACE_NAMES = ['front','right','back','left','top','bottom'];
   const GRID = 3;
   const TILE_COUNT = FACE_NAMES.length * GRID * GRID;
@@ -458,7 +458,11 @@
   }
 
   const FACE_NORMALS={
-    front:[0,0,1],back:[0,0,-1],right:[1,0,0],left:[-1,0,0],top:[0,1,0],bottom:[0,-1,0]
+    front:[0,0,1],back:[0,0,-1],right:[1,0,0],left:[-1,0,0],
+    /* CSS rotateX(90deg) maps the top face normal toward -Y; rotateX(-90deg)
+       maps the bottom face normal toward +Y. These signs must match the rendered
+       CSS faces or visible top/bottom tiles get pointer-events disabled. */
+    top:[0,-1,0],bottom:[0,1,0]
   };
 
   function rotatedNormalZ(face){
@@ -473,6 +477,14 @@
     const y2=y1*Math.cos(rx)-z1*Math.sin(rx);
     const z2=y1*Math.sin(rx)+z1*Math.cos(rx);
     return z2;
+  }
+
+  function validateDefaultFaceVisibility(){
+    const expected=['front','right','top'];
+    const missing=expected.filter(face=>rotatedNormalZ(face)<=0.035);
+    if(missing.length){
+      throw new Error(`Default visible face hit-test mismatch: ${missing.join(', ')}`);
+    }
   }
 
   function updateFaceHitTesting(){
@@ -788,6 +800,7 @@
   try{
     buildGraph();
     validateCrossFaceGeometry();
+    validateDefaultFaceVisibility();
     bindEvents();
     newPuzzle();
     applyRotation();
