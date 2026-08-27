@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const APP_VERSION = '1.1.1';
+  const APP_VERSION = '1.2.0';
   const GRID = 3;
   const FACE_NAMES = ['front','right','back','left','top','bottom'];
   const TILE_COUNT = FACE_NAMES.length * GRID * GRID;
@@ -93,6 +93,7 @@
   const wordThemeNameEl = document.getElementById('wordThemeName');
   const cubePlayerNameEl = document.getElementById('cubePlayerName');
   const cubeDifficultyBadge = document.getElementById('cubeDifficultyBadge');
+  const cubeThemeBadge = document.getElementById('cubeThemeBadge');
   const difficultyMessageEl = document.getElementById('difficultyMessage');
   const hintBtn = document.getElementById('hintBtn');
   const switchProfileBtn = document.getElementById('switchProfileBtn');
@@ -144,6 +145,7 @@
   let hintNodes = new Set();
   let hintTimer = null;
   let cubeHints = 0;
+  const PUZZLE_CACHE_KEY=`anitasWordCubeLastGood:${activeProfileName}:${cubeDifficulty}:v120`;
 
   const CANVAS_THEME = {
     dark:{
@@ -218,7 +220,7 @@
       for(let j=i+1;j<nodes.length;j++){
         const a=nodes[i],b=nodes[j];
         if(a.face===b.face) continue;
-        if(V.len(V.sub(a.pos,b.pos))<0.76){ adjacency.get(a.id).add(b.id); adjacency.get(b.id).add(a.id); }
+        if(V.len(V.sub(a.pos,b.pos))<1.23){ adjacency.get(a.id).add(b.id); adjacency.get(b.id).add(a.id); }
       }
     }
   }
@@ -231,7 +233,7 @@
         if(b && b.face!==a.face && a.id<otherId) links++;
       }
     }
-    const expected=12*GRID;
+    const expected=12*(3*GRID-2); // per edge: GRID straight + 2*(GRID-1) diagonals
     if(links!==expected) throw new Error(`Cube graph mismatch: ${links}, expected ${expected}`);
   }
 
@@ -397,38 +399,125 @@
     return validateUniqueTargets(words,paths,filled)?filled:null;
   }
 
-  function generatePuzzle(){
-    const route=coverRoute();
-    if(!route) throw new Error('Full-cover cube route is invalid.');
+  function complexityMatches(words,paths,strict=true){
+    if(!strict) return true;
+    const cfg=CUBE_DIFFICULTIES[cubeDifficulty];
+    const faceCounts=words.map(word=>new Set(paths.get(word).map(id=>nodeById.get(id).face)).size);
+    const crossFaceCount=faceCounts.filter(count=>count>1).length;
+    const crossBurden=faceCounts.reduce((sum,count)=>sum+Math.max(0,count-1),0);
+    if(crossFaceCount<cfg.minCross || crossFaceCount>cfg.maxCross) return false;
+    if(cubeDifficulty==='hard' && crossBurden<4) return false;
+    return true;
+  }
 
+  function randomCoverRoute(){
+    for(let attempt=0;attempt<12;attempt++){
+      const start=nodes[randInt(nodes.length)]?.id;
+      if(start===undefined) break;
+      const path=[start],used=new Set([start]);
+      let budget=18000;
+
+      function walk(currentId){
+        if(path.length===TILE_COUNT) return true;
+        if(--budget<=0) return false;
+        const current=nodeById.get(currentId);
+        const options=[...adjacency.get(currentId)]
+          .filter(id=>!used.has(id))
+          .map(id=>{
+            const node=nodeById.get(id);
+            const onward=[...adjacency.get(id)].filter(next=>!used.has(next)).length;
+            let facePenalty=0;
+            if(node.face!==current.face) facePenalty=cubeDifficulty==='beginner'?1.8:cubeDifficulty==='middle'?.65:-.15;
+            return {id,score:onward+facePenalty+Math.random()*.35};
+          })
+          .sort((a,b)=>a.score-b.score);
+
+        for(const option of options){
+          used.add(option.id); path.push(option.id);
+          if(walk(option.id)) return true;
+          path.pop(); used.delete(option.id);
+        }
+        return false;
+      }
+
+      if(walk(start)) return path;
+    }
+    return null;
+  }
+
+  function tryGenerateFromRoute(route,strict=true,attemptsPerTheme=160){
+    if(!route || route.length!==TILE_COUNT) return false;
     const available=availableWordThemes();
     const alternatives=available.filter(theme=>theme.name!==previousWordThemeName);
     const themeOrder=shuffle(alternatives.length?alternatives:available);
-    const maxThemes=Math.min(6,themeOrder.length);
 
-    for(let themeIndex=0;themeIndex<maxThemes;themeIndex++){
-      const theme=themeOrder[themeIndex];
-      for(let attempt=0;attempt<180;attempt++){
+    for(const theme of themeOrder){
+      for(let attempt=0;attempt<attemptsPerTheme;attempt++){
         const words=chooseCoverWords(theme.words);
         if(!words) break;
         const candidate=buildFullCoverCandidate(words,route);
         if(!candidate) continue;
         const {working,paths}=candidate;
-        const cfg=CUBE_DIFFICULTIES[cubeDifficulty];
-        const faceCounts=words.map(word=>new Set(paths.get(word).map(id=>nodeById.get(id).face)).size);
-        const crossFaceCount=faceCounts.filter(count=>count>1).length;
-        const crossBurden=faceCounts.reduce((sum,count)=>sum+Math.max(0,count-1),0);
-        if(crossFaceCount<cfg.minCross || crossFaceCount>cfg.maxCross) continue;
-        if(cubeDifficulty==='hard' && crossBurden<4) continue;
+        if(!complexityMatches(words,paths,strict)) continue;
         if(!validateUniqueTargets(words,paths,working)) continue;
         board=working;
         targets=words;
         targetPaths=paths;
         activeWordTheme=theme;
         previousWordThemeName=theme.name;
-        return;
+        return true;
       }
     }
+    return false;
+  }
+
+  function savePuzzleCache(){
+    try{
+      const payload={
+        version:120,difficulty:cubeDifficulty,theme:activeWordTheme.name,
+        board:[...board],targets:[...targets],
+        paths:Object.fromEntries([...targetPaths].map(([word,path])=>[word,[...path]]))
+      };
+      localStorage.setItem(PUZZLE_CACHE_KEY,JSON.stringify(payload));
+    }catch(_){/* cache is optional */}
+  }
+
+  function restorePuzzleCache(){
+    try{
+      const data=JSON.parse(localStorage.getItem(PUZZLE_CACHE_KEY)||'null');
+      if(!data || data.version!==120 || data.difficulty!==cubeDifficulty) return false;
+      const theme=WORD_THEMES.find(item=>item.name===data.theme);
+      if(!theme || !Array.isArray(data.board) || data.board.length!==TILE_COUNT || !Array.isArray(data.targets)) return false;
+      const paths=new Map(data.targets.map(word=>[word,Array.isArray(data.paths?.[word])?[...data.paths[word]]:[]]));
+      if(data.board.some(letter=>typeof letter!=='string' || letter.length!==1)) return false;
+      if(new Set([...paths.values()].flat()).size!==TILE_COUNT) return false;
+      if(!validateUniqueTargets(data.targets,paths,data.board)) return false;
+      board=[...data.board]; targets=[...data.targets]; targetPaths=paths; activeWordTheme=theme; previousWordThemeName=theme.name;
+      return true;
+    }catch(_){ return false; }
+  }
+
+  function generatePuzzle(){
+    const baseRoute=coverRoute();
+    if(!baseRoute) throw new Error('Full-cover cube route is invalid.');
+
+    // 1) Requested difficulty profile on the stable full-cover route.
+    if(tryGenerateFromRoute(baseRoute,true,180)){ savePuzzleCache(); return; }
+
+    // 2) Keep exact word uniqueness/full coverage, but relax only the optional
+    // cross-face count target so generation cannot fail because of a cosmetic
+    // difficulty distribution constraint.
+    if(tryGenerateFromRoute(baseRoute,false,260)){ savePuzzleCache(); return; }
+
+    // 3) Different Hamiltonian routes change where word boundaries fall and are
+    // especially useful now that natural diagonal cross-edge moves are allowed.
+    for(let routeAttempt=0;routeAttempt<3;routeAttempt++){
+      const alternate=randomCoverRoute();
+      if(alternate && tryGenerateFromRoute(alternate,false,90)){ savePuzzleCache(); return; }
+    }
+
+    // 4) Never show a blank cube when a previously proven-valid puzzle exists.
+    if(restorePuzzleCache()) return;
     throw new Error('Could not generate a unique full-cover cube puzzle from the available themes.');
   }
 
@@ -662,7 +751,7 @@
     do{ generatePuzzle(); cubePuzzleFingerprint=makeCubeFingerprint(); guard++; }
     while(playerStats.completedFingerprints.includes(cubePuzzleFingerprint) && guard<24);
     cubePuzzleCode=`WC-${Date.now().toString(36).toUpperCase()}-${cubeDifficulty.toUpperCase()}-${activeWordTheme.name.toUpperCase()}`;
-    wordThemeNameEl.textContent=`${activeWordTheme.name} set`; updateDifficultyUI(); renderTargets(); renderBonus(); updateSelectionUI(); updateStats(); resetView(false); draw(); toast(`New ${CUBE_DIFFICULTIES[cubeDifficulty].label} ${activeWordTheme.name} cube · ${activeProfileName} · v${APP_VERSION}`);
+    wordThemeNameEl.textContent=`${activeWordTheme.name} set`; cubeThemeBadge.textContent=`Theme: ${activeWordTheme.name}`; updateDifficultyUI(); renderTargets(); renderBonus(); updateSelectionUI(); updateStats(); resetView(false); draw(); toast(`New ${CUBE_DIFFICULTIES[cubeDifficulty].label} ${activeWordTheme.name} cube · ${activeProfileName} · v${APP_VERSION}`);
   }
 
   function resetView(animate=true){ rotX=-22; rotY=-32; draw(); if(animate){ stage.classList.add('settling'); setTimeout(()=>stage.classList.remove('settling'),180); } }
@@ -888,5 +977,5 @@
   }
 
   try{ cubePlayerNameEl.textContent=activeProfileName; buildGraph(); validateCrossFaceGeometry(); bindEvents(); initTheme(); resizeCanvas(); newPuzzle(); }
-  catch(error){ console.error(error); currentWordEl.textContent='Could not generate cube'; selectionMetaEl.textContent='Reload the page to try again.'; }
+  catch(error){ console.error(error); if(cubeThemeBadge)cubeThemeBadge.textContent='Theme: unavailable'; if(wordThemeNameEl)wordThemeNameEl.textContent='Generation failed'; currentWordEl.textContent='Could not generate cube'; selectionMetaEl.textContent='Press New cube to retry.'; }
 })();

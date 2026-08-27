@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" id="themeColorMeta" content="#f3f7f4" />
-  <title>Anitas Word Cube · v1.1.1</title>
+  <title>Anitas Word Cube · v1.2.0</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23091311'/%3E%3Cg fill='none' stroke='%2359c9c4' stroke-width='5' stroke-linecap='round'%3E%3Cpath d='M18 18h14v14H18zM32 32h14v14H32zM25 25l14 14'/%3E%3C/g%3E%3C/svg%3E" />
   <link rel="stylesheet" href="cube.css?v=1.1.1" />
 </head>
@@ -12,13 +12,14 @@
   <main class="app-shell">
     <header class="topbar">
       <div>
-        <div class="eyebrow">3D game <span class="version-badge">v1.1.1</span></div>
+        <div class="eyebrow">3D game <span class="version-badge">v1.2.0</span></div>
         <h1>Anitas Word Cube</h1>
         <p>Find words across a rotatable 3×3 cube. Paths may continue over cube edges onto another face.</p>
       </div>
       <div class="top-actions">
         <span class="profile-badge" id="cubePlayerName">Player</span>
         <span class="difficulty-badge" id="cubeDifficultyBadge">Beginner</span>
+        <span class="theme-badge" id="cubeThemeBadge">Theme: loading…</span>
         <a class="ghost-btn" href="../">Game menu</a>
         <a class="ghost-btn" href="../stats.html">Statistics</a>
         <button class="ghost-btn" id="switchProfileBtn" type="button">Switch player</button>
@@ -82,7 +83,7 @@
         <div class="howto">
           <strong>Controls</strong>
           <p><b>Rotate:</b> drag empty space beside the cube with mouse or touch. Rotation is unlimited in every direction; the word timer pauses while rotating.</p>
-          <p><b>Select:</b> tap touching visible tiles. Tap any selected tile again to deselect it and safely shorten the path.</p>
+          <p><b>Select:</b> tap touching visible tiles. Diagonal steps are allowed on a face and across a cube edge. Tap any selected tile again to deselect it and safely shorten the path.</p>
           <p><b>Difficulty:</b> Beginner shows targets + hints, Middle hides targets but keeps hints, Hard hides both and uses more complex routes.</p>
           <p><b>Finish:</b> target words are recognised automatically. For bonus words, wait 8 seconds or use <em>Check word</em>.</p>
         </div>
