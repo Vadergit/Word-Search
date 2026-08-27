@@ -2,12 +2,12 @@
   'use strict';
 
   const FACE_NAMES = ['front','right','back','left','top','bottom'];
-  const GRID = 4;
+  const GRID = 3;
   const TILE_COUNT = FACE_NAMES.length * GRID * GRID;
   const SELECTION_MS = 8000;
   const TARGET_SCORE = 120;
   const BONUS_SCORE = 30;
-  const MAX_SELECTION = 16;
+  const MAX_SELECTION = 14;
 
   const SPACE_WORDS = [
     'ASTEROID','ECLIPSE','STELLAR','GRAVITY','CAPSULE','SHUTTLE','VOYAGER','NEBULA',
@@ -81,14 +81,19 @@
   }
 
   function facePosition(face, row, col){
-    const v = [-1.5,-0.5,0.5,1.5];
+    /* Logical 3D tile centres. Keeping the face plane half a tile beyond the
+       outer tile centres makes touching tiles on neighbouring faces exactly
+       sqrt(.5^2 + .5^2) apart, independent of GRID. */
+    const mid=(GRID-1)/2;
+    const plane=GRID/2;
+    const v=Array.from({length:GRID},(_,i)=>i-mid);
     switch(face){
-      case 'front': return [v[col], v[3-row], 2];
-      case 'back': return [v[3-col], v[3-row], -2];
-      case 'right': return [2, v[3-row], v[3-col]];
-      case 'left': return [-2, v[3-row], v[col]];
-      case 'top': return [v[col], 2, v[row]];
-      case 'bottom': return [v[col], -2, v[3-row]];
+      case 'front': return [v[col], v[GRID-1-row], plane];
+      case 'back': return [v[GRID-1-col], v[GRID-1-row], -plane];
+      case 'right': return [plane, v[GRID-1-row], v[GRID-1-col]];
+      case 'left': return [-plane, v[GRID-1-row], v[col]];
+      case 'top': return [v[col], plane, v[row]];
+      case 'bottom': return [v[col], -plane, v[GRID-1-row]];
       default: return [0,0,0];
     }
   }
@@ -142,7 +147,21 @@
         btn.dataset.face = face;
         btn.setAttribute('aria-label', `${face} tile ${node.row+1}, ${node.col+1}: ${board[node.id]}`);
         btn.textContent = board[node.id];
-        btn.addEventListener('click', () => selectTile(node.id));
+        /* Pointer-down gives instant visual feedback on mouse and touch. It also
+           keeps tile selection completely separate from the surrounding drag area. */
+        btn.addEventListener('pointerdown', event => {
+          event.preventDefault();
+          event.stopPropagation();
+          selectTile(node.id);
+        });
+        /* Preserve keyboard activation (Enter/Space produces click with detail 0). */
+        btn.addEventListener('click', event => {
+          if(event.detail === 0){
+            event.preventDefault();
+            event.stopPropagation();
+            selectTile(node.id);
+          }
+        });
         faceEl.appendChild(btn);
         tileEls.set(node.id,btn);
       });
@@ -207,9 +226,21 @@
     const chosen = [];
     for(const word of [...long.slice(0,2),...rest]){
       if(!chosen.includes(word)) chosen.push(word);
-      if(chosen.length === 7) break;
+      if(chosen.length === 5) break;
     }
     return chosen;
+  }
+
+  function validatePuzzle(words,paths,workingBoard){
+    for(const word of words){
+      const path=paths.get(word);
+      if(!path || path.length!==word.length) return false;
+      for(let i=0;i<path.length;i++){
+        if(workingBoard[path[i]]!==word[i]) return false;
+        if(i>0 && !adjacency.get(path[i-1]).has(path[i])) return false;
+      }
+    }
+    return true;
   }
 
   function generatePuzzle(){
@@ -221,14 +252,14 @@
 
       for(let i = 0; i < words.length; i++){
         const word = words[i];
-        const minFaces = i < 2 ? 3 : i < 6 ? 2 : 1;
+        const minFaces = i === 0 ? 3 : i < 4 ? 2 : 1;
         const path = findPlacement(word,minFaces,workingBoard);
         if(!path){ failed = true; break; }
         path.forEach((id,index) => { workingBoard[id] = word[index]; });
         paths.set(word,path);
       }
 
-      if(failed) continue;
+      if(failed || !validatePuzzle(words,paths,workingBoard)) continue;
       for(let i = 0; i < workingBoard.length; i++){
         if(!workingBoard[i]) workingBoard[i] = LETTER_POOL[randInt(LETTER_POOL.length)];
       }
@@ -301,7 +332,19 @@
 
     selected.push(id);
     updateSelectionUI();
-    startSelectionTimer(SELECTION_MS);
+
+    /* Target words should feel immediate: as soon as the complete valid path
+       spells one of the listed targets, score it automatically. Bonus words
+       still use Check word / the longer timer so players can keep extending. */
+    const candidate=selectedWord();
+    if(targets.includes(candidate) && !foundTargets.has(candidate)){
+      stopSelectionTimer();
+      setTimeout(() => {
+        if(!evaluating && selectedWord() === candidate) evaluateSelection();
+      },120);
+    }else{
+      startSelectionTimer(SELECTION_MS);
+    }
   }
 
   function selectedWord(){
