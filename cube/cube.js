@@ -1,6 +1,7 @@
 (() => {
   'use strict';
 
+  const APP_VERSION = '0.4.0';
   const FACE_NAMES = ['front','right','back','left','top','bottom'];
   const GRID = 3;
   const TILE_COUNT = FACE_NAMES.length * GRID * GRID;
@@ -51,6 +52,7 @@
   let foundTargets = new Set();
   let foundBonus = new Set();
   let solvedNodes = new Set();
+  let solvedStepByNode = new Map();
   let selected = [];
   let score = 0;
   let bonusScore = 0;
@@ -231,20 +233,98 @@
     return chosen;
   }
 
-  function validatePuzzle(words,paths,workingBoard){
-    for(const word of words){
-      const path=paths.get(word);
-      if(!path || path.length!==word.length) return false;
-      for(let i=0;i<path.length;i++){
-        if(workingBoard[path[i]]!==word[i]) return false;
-        if(i>0 && !adjacency.get(path[i-1]).has(path[i])) return false;
+  function samePath(a,b){
+    return Boolean(a&&b) && a.length===b.length && a.every((id,index)=>id===b[index]);
+  }
+
+  /* Return at most `limit` simple paths that spell the word on the COMPLETE
+     cube graph. This is the same adjacency graph the player is allowed to use,
+     including same-face diagonals and legal cross-edge/corner transitions. */
+  function findWordPaths(word,candidateBoard,limit=2){
+    const found=[];
+    const starts=nodes.filter(node=>candidateBoard[node.id]===word[0]);
+
+    function walk(id,index,path,used){
+      if(found.length>=limit) return;
+      if(index===word.length-1){
+        found.push([...path]);
+        return;
       }
+      for(const next of adjacency.get(id)){
+        if(found.length>=limit) return;
+        if(used.has(next) || candidateBoard[next]!==word[index+1]) continue;
+        used.add(next);
+        path.push(next);
+        walk(next,index+1,path,used);
+        path.pop();
+        used.delete(next);
+      }
+    }
+
+    for(const start of starts){
+      if(found.length>=limit) break;
+      walk(start.id,0,[start.id],new Set([start.id]));
+    }
+    return found;
+  }
+
+  function targetHasExactlyIntendedPath(word,intendedPath,candidateBoard){
+    const matches=findWordPaths(word,candidateBoard,2);
+    return matches.length===1 && samePath(matches[0],intendedPath);
+  }
+
+  function validateUniqueTargets(words,paths,candidateBoard){
+    for(const word of words){
+      const intended=paths.get(word);
+      if(!intended || intended.length!==word.length) return false;
+      for(let i=0;i<intended.length;i++){
+        if(candidateBoard[intended[i]]!==word[i]) return false;
+        if(i>0 && !adjacency.get(intended[i-1]).has(intended[i])) return false;
+      }
+      if(!targetHasExactlyIntendedPath(word,intended,candidateBoard)) return false;
     }
     return true;
   }
 
+  function weightedLetterCandidates(){
+    const out=[];
+    for(let i=0;i<24;i++){
+      const letter=LETTER_POOL[randInt(LETTER_POOL.length)];
+      if(!out.includes(letter)) out.push(letter);
+    }
+    for(const letter of shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''))){
+      if(!out.includes(letter)) out.push(letter);
+    }
+    return out;
+  }
+
+  /* Fill empty tiles one at a time. A candidate letter is accepted only when
+     every target word affected by that letter still has exactly one path: the
+     intended path. Because adding letters can create but never remove paths,
+     this preserves uniqueness all the way to the final filled cube. */
+  function fillBoardWithoutDuplicateTargets(words,paths,baseBoard){
+    const filled=[...baseBoard];
+    if(!validateUniqueTargets(words,paths,filled)) return null;
+
+    const blanks=shuffle(nodes.map(node=>node.id).filter(id=>!filled[id]));
+    for(const id of blanks){
+      let placed=false;
+      for(const letter of weightedLetterCandidates()){
+        filled[id]=letter;
+        const affected=words.filter(word=>word.includes(letter));
+        const safe=affected.every(word=>targetHasExactlyIntendedPath(word,paths.get(word),filled));
+        if(safe){
+          placed=true;
+          break;
+        }
+      }
+      if(!placed) return null;
+    }
+    return validateUniqueTargets(words,paths,filled) ? filled : null;
+  }
+
   function generatePuzzle(){
-    for(let puzzleAttempt = 0; puzzleAttempt < 30; puzzleAttempt++){
+    for(let puzzleAttempt = 0; puzzleAttempt < 80; puzzleAttempt++){
       const workingBoard = Array(TILE_COUNT).fill('');
       const words = chooseTargetWords().sort((a,b) => b.length-a.length);
       const paths = new Map();
@@ -259,16 +339,16 @@
         paths.set(word,path);
       }
 
-      if(failed || !validatePuzzle(words,paths,workingBoard)) continue;
-      for(let i = 0; i < workingBoard.length; i++){
-        if(!workingBoard[i]) workingBoard[i] = LETTER_POOL[randInt(LETTER_POOL.length)];
-      }
-      board = workingBoard;
+      if(failed || !validateUniqueTargets(words,paths,workingBoard)) continue;
+      const filledBoard=fillBoardWithoutDuplicateTargets(words,paths,workingBoard);
+      if(!filledBoard) continue;
+
+      board = filledBoard;
       targets = words;
       targetPaths = paths;
       return;
     }
-    throw new Error('Could not generate a playable cube puzzle.');
+    throw new Error('Could not generate a unique-path cube puzzle.');
   }
 
   function newPuzzle(){
@@ -277,6 +357,7 @@
     foundTargets = new Set();
     foundBonus = new Set();
     solvedNodes = new Set();
+    solvedStepByNode = new Map();
     score = 0;
     bonusScore = 0;
     crossFaceFinds = 0;
@@ -288,7 +369,7 @@
     updateSelectionUI();
     updateStats();
     resetView();
-    toast('New cube ready');
+    toast(`New cube ready · v${APP_VERSION}`);
   }
 
   const FACE_NORMALS={
@@ -399,6 +480,9 @@
     tileEls.forEach((el,id) => {
       el.classList.toggle('selected',selected.includes(id));
       el.classList.toggle('solved',solvedNodes.has(id));
+      const solvedStep=solvedStepByNode.get(id);
+      if(solvedStep!==undefined) el.dataset.solvedStep=String(solvedStep);
+      else delete el.dataset.solvedStep;
       const step = selected.indexOf(id);
       if(step >= 0) el.dataset.step = String(step+1);
       else delete el.dataset.step;
@@ -462,7 +546,11 @@
         flashPath(pathSnapshot,'neutral');
       }else{
         foundTargets.add(word);
-        pathSnapshot.forEach(id => solvedNodes.add(id));
+        pathSnapshot.forEach((id,index) => {
+          solvedNodes.add(id);
+          if(!solvedStepByNode.has(id)) solvedStepByNode.set(id,index+1);
+        });
+        updateTileStates();
         const earned = word.length * TARGET_SCORE + Math.max(0,facesUsed-1)*180;
         score += earned;
         if(facesUsed > 1) crossFaceFinds++;
