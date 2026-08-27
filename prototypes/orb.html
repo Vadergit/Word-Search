@@ -4,14 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" id="themeColorMeta" content="#f3f7f4" />
-  <title>Word Orb Prototype · v0.4.9</title>
-  <link rel="stylesheet" href="prototype.css?v=0.4.9" />
+  <title>Word Orb Prototype · v0.4.12</title>
+  <link rel="stylesheet" href="prototype.css?v=0.4.12" />
 </head>
 <body data-mode="orb">
   <main class="app-shell">
     <header class="topbar">
       <div>
-        <div class="eyebrow">3D prototype <span class="version-badge">v0.4.9</span></div>
+        <div class="eyebrow">3D prototype <span class="version-badge">v0.4.12</span></div>
         <h1>Word Orb</h1>
         <p>The preferred geodesic Orb is back: 42 surface tiles built from the dual of a subdivided icosahedron — exactly 12 pentagons and 30 hexagons. Cube-style selection and trails follow the spherical surface.</p>
       </div>
@@ -53,7 +53,7 @@
         <div class="panel-section">
           <div class="theme-showcase"><span>Current shape</span><strong>Orb</strong></div>
           <div class="section-heading"><div><span>Prototype routes</span><h2>Target words</h2></div><div class="face-badge">12 × 5-gon · 30 × 6-gon</div></div>
-          <p class="section-copy">The old latitude/longitude grid is removed. The playable cells are real geodesic pentagons and hexagons distributed around a solid sphere. Their local surface axes are now derived from a stable world-up frame so the letter orientation does not randomly twist between cells.</p>
+          <p class="section-copy">The playable cells are real geodesic pentagons and hexagons distributed around a solid sphere. Letters are now optically centred inside every polygon and reduced in size so they no longer crowd the tile edges.</p>
           <div class="target-list" id="targetList"></div>
         </div>
         <div class="howto">
@@ -62,16 +62,16 @@
           <p><b>Select:</b> tap a geodesic neighbour. Selected cells turn mint immediately, like the Cube.</p>
           <p><b>Trail:</b> the rounded Cube-style path is sampled along the sphere so it remains attached while rotating.</p>
         </div>
-        <div class="prototype-note"><strong>Prototype v0.4.9.</strong> Only prototype files are affected; the actual Word Path and Word Cube remain untouched.</div>
+        <div class="prototype-note"><strong>Prototype v0.4.12.</strong> Only prototype files are affected; the actual Word Path remains untouched.</div>
       </aside>
     </section>
   </main>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <div class="win" id="win" role="dialog" aria-modal="true"><div class="win-card"><div class="win-mark">✓</div><div class="eyebrow">Prototype complete</div><h2>Shape solved.</h2><p id="winText"></p><button class="primary-btn" id="nextBtn" type="button">Generate next prototype</button></div></div>
-  <script src="prototype-core.js?v=0.4.9"></script>
-  <script src="prototype-geometry.js?v=0.4.9"></script>
-  <script src="prototype-render.js?v=0.4.9"></script>
-  <script src="prototype-runtime.js?v=0.4.9"></script>
+  <script src="prototype-core.js?v=0.4.12"></script>
+  <script src="prototype-geometry.js?v=0.4.12"></script>
+  <script src="prototype-render.js?v=0.4.12"></script>
+  <script src="prototype-runtime.js?v=0.4.12"></script>
 </body>
 </html>
