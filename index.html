@@ -1000,7 +1000,8 @@
     const valid=THEME_POOLS.filter(t=>
       t.words.reduce((s,w)=>s+w.length,0)>=CELL_COUNT && (ignoreUnlocks||isThemeUnlocked(t.name))
     );
-    const candidates=valid.filter(t=>t.name!==previousThemeName);
+    const deterministicRun=activeGameMode==="daily"||Boolean(customSeed);
+    const candidates=deterministicRun?valid:valid.filter(t=>t.name!==previousThemeName);
     const pool=candidates.length?candidates:valid;
     currentTheme=pool[Math.floor(rand()*pool.length)];
     previousThemeName=currentTheme.name;
