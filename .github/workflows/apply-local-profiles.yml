@@ -1,0 +1,37 @@
+name: Apply local profiles
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-local-profiles.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Apply profile patch
+        run: python patch_local_profiles.py
+      - name: Syntax check
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          t=Path('index.html').read_text(encoding='utf-8')
+          s=t.rfind('<script>'); e=t.rfind('</script>')
+          Path('/tmp/app.js').write_text(t[s+8:e],encoding='utf-8')
+          PY
+          node --check /tmp/app.js
+          git diff --check
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Add local Anita and Dario profiles"
+          git push origin HEAD:main
