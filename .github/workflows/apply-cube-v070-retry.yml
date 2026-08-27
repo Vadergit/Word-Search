@@ -1,0 +1,49 @@
+name: Apply cube v0.7.0 retry
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-cube-v070-retry.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Fix patch helper and apply v0.7.0
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('patch_cube_v070.py')
+          s=p.read_text(encoding='utf-8')
+          bad='''js=rep(js,\n"  function drawFaceBase(face){\\n    const t=canvasTheme(); const q=faceCornerPoints(face).map(projectPoint); beginPoly(q); ctx.fillStyle=t.face; ctx.fill();",\n"  function drawFaceBase(face){\\n    const t=canvasTheme(); const q=faceCornerPoints(face).map(projectPoint); beginPoly(q); ctx.fillStyle=t.face; ctx.fill();",\n'draw face body')\n'''
+          if bad not in s:
+              raise SystemExit('Could not locate obsolete draw-face check')
+          p.write_text(s.replace(bad,''),encoding='utf-8')
+          PY
+          python patch_cube_v070.py
+      - name: Validate
+        run: |
+          node --check cube/cube.js
+          git diff --check
+          grep -q "const APP_VERSION = '0.7.0';" cube/cube.js
+          grep -q 'COVER_ROUTE_COORDS' cube/cube.js
+          grep -q 'chooseCoverWords' cube/cube.js
+          grep -q 'drawSolidCore();' cube/cube.js
+          grep -q 'selected=selected.slice(0,selectedIndex);' cube/cube.js
+          grep -q 'cubeCleared=true' cube/cube.js
+          grep -q 'cube.js?v=0.7.0' cube/index.html
+          ! grep -q 'Math.max(-89' cube/cube.js
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add cube/index.html cube/cube.js
+          git commit -m "Cube v0.7.0: full coverage, deselect and solid core"
+          git push origin HEAD:main
