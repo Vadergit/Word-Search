@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const APP_VERSION = '0.7.2';
+  const APP_VERSION = '0.8.0';
   const GRID = 3;
   const FACE_NAMES = ['front','right','back','left','top','bottom'];
   const TILE_COUNT = FACE_NAMES.length * GRID * GRID;
@@ -14,13 +14,24 @@
   const TILE_HALF = 0.43;
   const CAMERA_Z = 6.7;
 
-  const SPACE_WORDS = [
-    'ASTEROID','ECLIPSE','STELLAR','GRAVITY','CAPSULE','SHUTTLE','VOYAGER','NEBULA',
-    'GALAXY','METEOR','ROCKET','PLANET','COSMOS','SATURN','URANUS','MERCURY','JUPITER',
-    'ORBIT','COMET','LUNAR','SOLAR','VENUS','MARS','EARTH','MOON','SPACE','NOVA','QUASAR',
-    'PULSAR','PHOTON','AURORA','CRATER','MODULE','ALIEN','SIGNAL','PROBE','ROVER','TITAN',
-    'ORION','APOLLO','ZENITH','VACUUM','PLASMA','HELIUM','FUSION','COSMIC','STAR','ASTRO'
+  const WORD_THEMES = [
+    {name:'Cosmic',words:['ASTEROID','ECLIPSE','STELLAR','GRAVITY','CAPSULE','SHUTTLE','VOYAGER','NEBULA','GALAXY','METEOR','ROCKET','PLANET','COSMOS','SATURN','URANUS','MERCURY','JUPITER','ORBIT','COMET','LUNAR','SOLAR','VENUS','MARS','EARTH','MOON','SPACE','NOVA','QUASAR','PULSAR','PHOTON','AURORA','CRATER','MODULE','ALIEN','SIGNAL','PROBE','ROVER','TITAN','ORION','APOLLO','ZENITH','VACUUM','PLASMA','HELIUM','FUSION','COSMIC','STAR','ASTRO']},
+    {name:'Ocean',words:['OCEAN','WHALE','SHARK','CORAL','REEF','TURTLE','DOLPHIN','OCTOPUS','ANCHOR','SAILOR','ISLAND','COAST','BEACH','WAVES','TIDAL','CURRENT','HARBOR','SEAL','ORCA','MANTA','CRAB','LOBSTER','SEAHORSE','PEARL','SHELL','STORMS','DEEP','ABYSS','PLANKTON','SEAGRASS','KELP','MARINE','SURF','BOAT','SHIP','DECK','PORT','BUOY','TRIDENT','NAUTILUS']},
+    {name:'Nature',words:['FOREST','RIVER','VALLEY','MOUNTAIN','MEADOW','FLORA','FAUNA','LEAVES','BRANCH','ROOTS','STONE','ROCK','WATER','STREAM','LAKE','FIELD','GRASS','MOSS','FERN','MAPLE','CEDAR','PINE','BIRCH','DAISY','ROSE','TULIP','ORCHID','LOTUS','SUNSET','SUNRISE','RAIN','STORM','CLOUD','WIND','BREEZE','THUNDER','LIGHTNING','CANYON','CLIFF','GLACIER','DESERT','PRAIRIE','JUNGLE']},
+    {name:'Animals',words:['TIGER','LION','BEAR','WOLF','HORSE','ZEBRA','GIRAFFE','MONKEY','GORILLA','PANDA','KOALA','RABBIT','OTTER','BEAVER','BADGER','MOOSE','DEER','CAMEL','LLAMA','ALPACA','EAGLE','FALCON','HAWK','PARROT','PUFFIN','PENGUIN','SWAN','DUCK','GECKO','LIZARD','IGUANA','TURTLE','SNAKE','FROG','TOAD','SALMON','TROUT','SHARK','WHALE','DOLPHIN','ORCA','MANTIS','BEETLE','BUTTERFLY','SPIDER']},
+    {name:'Adventure',words:['TRAIL','QUEST','EXPLORE','JOURNEY','COMPASS','MAPS','CAMP','CAMPING','TENT','HIKE','CLIMB','RAFTING','KAYAK','CANOE','ROPE','SUMMIT','VALLEY','CANYON','BRIDGE','CAVE','TORCH','PACK','BACKPACK','BOOTS','GUIDE','PATH','TRACK','ROUTE','ESCAPE','TREASURE','ISLAND','SHIP','SAILING','FOREST','RIVER','MOUNTAIN','GLACIER','DESERT','JUNGLE','VOYAGE','DISCOVER','WANDER','OUTDOOR']},
+    {name:'Fantasy',words:['DRAGON','WIZARD','CASTLE','KNIGHT','MAGIC','SPELL','POTION','FAIRY','GIANT','GOBLIN','TROLL','PHOENIX','UNICORN','MERMAID','THRONE','CROWN','SWORD','SHIELD','ARMOR','QUEST','TOWER','DUNGEON','CRYSTAL','RUNE','SPELLBOOK','WAND','CHARM','PORTAL','SHADOW','FOREST','KINGDOM','PRINCESS','PRINCE','QUEEN','KING','ROYAL','BEAST','MYTHIC','LEGEND','ORACLE','SPIRIT']},
+    {name:'Science',words:['ATOM','MOLECULE','CELL','GENOME','LASER','PHOTON','QUANTUM','ENERGY','MATTER','FORCE','GRAVITY','ORBIT','PLASMA','FUSION','NEURON','TISSUE','PROTEIN','ENZYME','CARBON','OXYGEN','HELIUM','NEON','METAL','CRYSTAL','MINERAL','FOSSIL','PLANET','COMET','STAR','GALAXY','BEAKER','FLASK','TEST','THEORY','MODEL','DATA','LOGIC','NUMBER','VECTOR','MATRIX','ANGLE','FORMULA','REACTION','ACID','BASE','ELECTRON','PROTON','NEUTRON']},
+    {name:'Technology',words:['CODE','ROBOT','SERVER','CLOUD','PIXEL','SCREEN','SENSOR','CAMERA','DEVICE','PHONE','TABLET','LAPTOP','KEYBOARD','MOUSE','ROUTER','MODEM','NETWORK','PACKET','SIGNAL','BINARY','DIGITAL','SYSTEM','KERNEL','MEMORY','STORAGE','DRIVER','BROWSER','SOCKET','CLIENT','SCRIPT','ENGINE','LOGIC','ARRAY','OBJECT','STRING','BUFFER','CACHE','THREAD','PROCESS','CHIP','CIRCUIT','FIRMWARE','HARDWARE','SOFTWARE','ANDROID','LINUX','WINDOWS']},
+    {name:'Bouldering',words:['BOULDER','PROBLEM','CIRCUIT','CAMPUS','MANTLE','DYNO','HEELHOOK','TOEHOOK','CRIMP','SLOPER','PINCH','JUGS','CHALK','BRUSH','BETA','FLASH','SEND','PROJECT','SPOTTER','START','ARETE','SLAB','ROOF','VOLUME','HOLDS','GRIP','POWER','TENSION','CORE','BALANCE','STATIC','DYNAMIC','FOOTWORK','MATCH','CROSS','GASTON','UNDERCLING','SIDEPULL','LOCKOFF','ROUTE','CRUX','MOVE','REACH','SMEAR','EDGING']},
+    {name:'Climbing',words:['CLIMB','CRIMP','SLOPER','PINCH','BELAY','ROPE','ANCHOR','CARABINER','HARNESS','CHALK','ROUTE','PITCH','CLIP','QUICKDRAW','ASCEND','DESCENT','LEDGE','CRUX','BETA','SLAB','ARETE','CHIMNEY','OVERHANG','MANTLE','FLAGGING','SMEAR','EDGING','CAMMING','NUTS','RAPPEL','WALL','SUMMIT','GEAR','BOLT','HANGER','FOOTHOLD','HANDHOLD','LOCKOFF','SIDEPULL','GASTON','JAMMING','BRIDGE','TRAVERSE','LEAD','TOPROPE']},
+    {name:'Tricking',words:['BACKFLIP','FRONTFLIP','CARTWHEEL','TORNADO','KICK','HOOK','ROUND','AERIAL','GAINER','CORK','SCOOT','RAIZ','SWIPE','TWIST','COMBO','LANDING','TAKEOFF','SPIN','FLIP','KICKS','TRICK','STANCE','SETUP','FLOW','POWER','SPEED','HEIGHT','CONTROL','BALANCE','SWING','WRAP','HYPER','ROUNDKICK','HOOKKICK','CHEAT','MASTER','TRAIN','SESSION','FLOOR','STYLE','LINK','CHAIN','ROTATE']},
+    {name:'Food',words:['APPLE','BANANA','ORANGE','GRAPE','LEMON','LIME','PEACH','MANGO','BERRY','CHERRY','MELON','BREAD','PASTA','PIZZA','RICE','CHEESE','BUTTER','CREAM','YOGURT','HONEY','SUGAR','SALT','PEPPER','SPICE','CURRY','SOUP','SALAD','STEAK','CHICKEN','FISH','SALMON','BURGER','TACO','WRAP','NOODLE','COOKIE','CAKE','MUFFIN','WAFFLE','PANCAKE','COFFEE','JUICE','COCOA','CHOCOLATE']},
+    {name:'Travel',words:['AIRPORT','FLIGHT','TICKET','PASSPORT','LUGGAGE','HOTEL','HOSTEL','TRAIN','TAXI','METRO','FERRY','CRUISE','BEACH','ISLAND','CITY','VILLAGE','MARKET','MUSEUM','TEMPLE','CASTLE','SQUARE','BRIDGE','STREET','ROAD','ROUTE','MAPS','GUIDE','TOUR','PHOTO','TRIP','JOURNEY','VOYAGE','ARRIVAL','DEPARTURE','BORDER','CUSTOMS','STAMP','CAMERA','SUITCASE','RESORT','CABIN','TENT','TRAVEL','PLANE','PORT']},
+    {name:'Music',words:['MUSIC','PIANO','GUITAR','DRUMS','VIOLIN','TRUMPET','FLUTE','CELLO','BASS','SAXOPHONE','CHORD','MELODY','RHYTHM','BEAT','TEMPO','SCALE','SONG','LYRICS','VOICE','SINGER','BAND','ALBUM','TRACK','STUDIO','RECORD','CONCERT','STAGE','MICROPHONE','SPEAKER','HEADSET','MIXER','CHORUS','VERSE','BRIDGE','HARMONY','OCTAVE','NOTE','SOUND','TUNE','DANCE']},
   ];
+  const WORD_THEME_WORD_COUNT = WORD_THEMES.reduce((sum,theme)=>sum+new Set(theme.words).size,0);
+  const SPACE_WORDS = WORD_THEMES[0].words;
   const LETTER_POOL = 'EEEEEEEEEEEEAAAAAAAAAIIIIIIIIOOOOOOOONNNNNNRRRRRRTTTTTTLLLLSSSSUUUUDDDDGGGBBCCMMPPFFHHVVWWYYKJXQZ';
   const ENGLISH_WORDS = window.ANITAS_ENGLISH_WORDS instanceof Set ? window.ANITAS_ENGLISH_WORDS : new Set();
 
@@ -62,6 +73,7 @@
   const winEl = document.getElementById('win');
   const winText = document.getElementById('winText');
   const nextCubeBtn = document.getElementById('nextCubeBtn');
+  const wordThemeNameEl = document.getElementById('wordThemeName');
 
   const nodes = [];
   const nodeById = new Map();
@@ -102,6 +114,8 @@
   const flashUntil = new Map();
   const THEME_KEY = 'anitasWordCubeTheme';
   let currentTheme = 'dark';
+  let activeWordTheme = WORD_THEMES[0];
+  let previousWordThemeName = '';
 
   const CANVAS_THEME = {
     dark:{
@@ -251,10 +265,10 @@
     return route;
   }
 
-  function chooseCoverWords(total=TILE_COUNT){
-    const pool=shuffle([...new Set(SPACE_WORDS)].filter(w=>w.length>=4 && w.length<=8));
+  function chooseCoverWords(pool,total=TILE_COUNT){
+    const words=shuffle([...new Set(pool)].filter(w=>w.length>=4 && w.length<=10));
     const states=new Map([[`0:0`,[]]]);
-    for(const word of pool){
+    for(const word of words){
       const snapshot=[...states.entries()];
       for(const [key,list] of snapshot){
         const [sum,count]=key.split(':').map(Number);
@@ -348,21 +362,31 @@
   function generatePuzzle(){
     const route=coverRoute();
     if(!route) throw new Error('Full-cover cube route is invalid.');
-    for(let attempt=0;attempt<520;attempt++){
-      const words=chooseCoverWords();
-      if(!words) break;
-      const candidate=buildFullCoverCandidate(words,route);
-      if(!candidate) continue;
-      const {working,paths}=candidate;
-      const crossFaceCount=words.filter(word=>new Set(paths.get(word).map(id=>nodeById.get(id).face)).size>1).length;
-      if(crossFaceCount<3) continue;
-      if(!validateUniqueTargets(words,paths,working)) continue;
-      board=working;
-      targets=words;
-      targetPaths=paths;
-      return;
+
+    const alternatives=WORD_THEMES.filter(theme=>theme.name!==previousWordThemeName);
+    const themeOrder=shuffle(alternatives.length?alternatives:WORD_THEMES);
+    const maxThemes=Math.min(4,themeOrder.length);
+
+    for(let themeIndex=0;themeIndex<maxThemes;themeIndex++){
+      const theme=themeOrder[themeIndex];
+      for(let attempt=0;attempt<180;attempt++){
+        const words=chooseCoverWords(theme.words);
+        if(!words) break;
+        const candidate=buildFullCoverCandidate(words,route);
+        if(!candidate) continue;
+        const {working,paths}=candidate;
+        const crossFaceCount=words.filter(word=>new Set(paths.get(word).map(id=>nodeById.get(id).face)).size>1).length;
+        if(crossFaceCount<3) continue;
+        if(!validateUniqueTargets(words,paths,working)) continue;
+        board=working;
+        targets=words;
+        targetPaths=paths;
+        activeWordTheme=theme;
+        previousWordThemeName=theme.name;
+        return;
+      }
     }
-    throw new Error('Could not generate a unique full-cover cube puzzle.');
+    throw new Error('Could not generate a unique full-cover cube puzzle from the available themes.');
   }
 
   function rotatePoint(p){
@@ -583,7 +607,7 @@
 
   function newPuzzle(){
     stopSelectionTimer(); selected=[]; foundTargets=new Set(); foundBonus=new Set(); foundPathByWord=new Map(); solvedNodes=new Set(); cubeCleared=false;
-    score=0; bonusScore=0; crossFaceFinds=0; evaluating=false; winEl.classList.remove('show'); generatePuzzle(); renderTargets(); renderBonus(); updateSelectionUI(); updateStats(); resetView(false); draw(); toast(`New cube ready · v${APP_VERSION}`);
+    score=0; bonusScore=0; crossFaceFinds=0; evaluating=false; winEl.classList.remove('show'); generatePuzzle(); wordThemeNameEl.textContent=`${activeWordTheme.name} set`; renderTargets(); renderBonus(); updateSelectionUI(); updateStats(); resetView(false); draw(); toast(`New ${activeWordTheme.name} cube · v${APP_VERSION}`);
   }
 
   function resetView(animate=true){ rotX=-22; rotY=-32; draw(); if(animate){ stage.classList.add('settling'); setTimeout(()=>stage.classList.remove('settling'),180); } }
@@ -664,7 +688,7 @@
   }
 
   function updateStats(){ foundStat.textContent=`${foundTargets.size}/${targets.length}`; scoreStat.textContent=score.toLocaleString(); bonusStat.textContent=String(foundBonus.size); crossStat.textContent=String(crossFaceFinds); }
-  function showWin(){ cubeCleared=true; draw(); winText.textContent=`You cleared all ${TILE_COUNT} letters by finding all ${targets.length} words, with ${crossFaceFinds} cross-face finds and ${score.toLocaleString()} points.`; setTimeout(()=>winEl.classList.add('show'),260); }
+  function showWin(){ cubeCleared=true; draw(); winText.textContent=`You cleared the ${activeWordTheme.name} cube: all ${TILE_COUNT} letters, ${targets.length} target words, ${crossFaceFinds} cross-face finds and ${score.toLocaleString()} points.`; setTimeout(()=>winEl.classList.add('show'),260); }
   function toast(message,type=''){ clearTimeout(toastTimer); toastEl.textContent=message; toastEl.className=`toast show ${type}`; toastTimer=setTimeout(()=>toastEl.className='toast',1900); }
 
   function onPointerDown(event){
