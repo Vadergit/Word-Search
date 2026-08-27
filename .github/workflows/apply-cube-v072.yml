@@ -1,0 +1,89 @@
+name: Apply cube v0.7.2
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-cube-v072.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Apply perspective culling fix
+        run: python3 patch_cube_v072.py
+
+      - name: Validate JavaScript and version
+        run: |
+          node --check cube/cube.js
+          git diff --check
+          grep -q "const APP_VERSION = '0.7.2';" cube/cube.js
+          grep -q 'faceFacingCosine' cube/cube.js
+          grep -q 'faceVisible(face,PLANE,0.025)' cube/cube.js
+          grep -q 'cube.js?v=0.7.2' cube/index.html
+          grep -q 'cube.css?v=0.7.2' cube/index.html
+          ! grep -q 'faceVisibility(' cube/cube.js
+
+      - name: Validate perspective face geometry
+        run: |
+          python3 - <<'PY'
+          import math
+
+          CAMERA_Z=6.7
+          PLANE=1.5
+          faces={
+            'front':(0,0,1),'back':(0,0,-1),
+            'right':(1,0,0),'left':(-1,0,0),
+            'top':(0,-1,0),'bottom':(0,1,0),
+          }
+          opposites=[('front','back'),('right','left'),('top','bottom')]
+
+          def rotate(p,rx,ry):
+            rx=math.radians(rx); ry=math.radians(ry)
+            x1=p[0]*math.cos(ry)+p[2]*math.sin(ry)
+            z1=-p[0]*math.sin(ry)+p[2]*math.cos(ry)
+            y1=p[1]
+            return (
+              x1,
+              y1*math.cos(rx)-z1*math.sin(rx),
+              y1*math.sin(rx)+z1*math.cos(rx),
+            )
+
+          def facing(n,rx,ry,plane=PLANE):
+            nr=rotate(n,rx,ry)
+            center=tuple(v*plane for v in nr)
+            view=(-center[0],-center[1],CAMERA_Z-center[2])
+            dist=math.sqrt(sum(v*v for v in view))
+            return sum(a*b for a,b in zip(nr,view))/dist
+
+          # Default view must still expose front/right/top.
+          default={k:facing(v,-22,-32) for k,v in faces.items()}
+          for name in ('front','right','top'):
+            assert default[name] > 0.025, (name, default[name])
+          for name in ('back','left','bottom'):
+            assert default[name] <= 0.025, (name, default[name])
+
+          # Across a broad rotation sample, opposite cube faces must never both
+          # qualify as front-facing at the same time.
+          for rx in range(-180,181,15):
+            for ry in range(-180,181,15):
+              scores={k:facing(v,rx,ry) for k,v in faces.items()}
+              for a,b in opposites:
+                assert not (scores[a] > 0.025 and scores[b] > 0.025), (rx,ry,a,b,scores[a],scores[b])
+          print('Perspective face geometry checks passed')
+          PY
+
+      - name: Commit feature
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add cube/cube.js cube/index.html
+          git commit -m "Cube v0.7.2: perspective-correct backface culling"
+          git push origin HEAD:main
