@@ -1,0 +1,40 @@
+name: Apply profile session
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-profile-session.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Apply local profile session patch
+        run: python patch_profile_session.py
+      - name: Validate scripts
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          for name in ['index.html','stats.html']:
+              t=Path(name).read_text(encoding='utf-8')
+              s=t.rfind('<script>'); e=t.rfind('</script>')
+              if s<0 or e<=s: raise SystemExit(f'No script in {name}')
+              Path(f'/tmp/{name}.js').write_text(t[s+8:e],encoding='utf-8')
+          PY
+          node --check /tmp/index.html.js
+          node --check /tmp/stats.html.js
+          git diff --check
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html stats.html
+          git commit -m "Keep local profile signed in across statistics"
+          git push origin HEAD:main
