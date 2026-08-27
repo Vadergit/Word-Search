@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const APP_VERSION = '0.4.3';
+  const APP_VERSION = '0.4.4';
   const FACE_NAMES = ['front','right','back','left','top','bottom'];
   const GRID = 3;
   const TILE_COUNT = FACE_NAMES.length * GRID * GRID;
@@ -164,7 +164,7 @@
     const el=tileEls.get(id);
     if(!el) return null;
     const faceEl=el.closest('.face');
-    if(!faceEl || !faceEl.classList.contains('hit-visible')) return null;
+    if(!faceEl) return null;
     const rect=el.getBoundingClientRect();
     const stageRect=stage.getBoundingClientRect();
     if(rect.width<2 || rect.height<2) return null;
@@ -488,6 +488,10 @@
   }
 
   function updateFaceHitTesting(){
+    /* Important: this visibility flag is used only for overlay/accessibility.
+       Pointer input is NOT gated here. CSS 3D + backface-visibility decides
+       which rendered face receives the event, which is much more reliable for
+       top/bottom faces across mouse and touch browsers. */
     document.querySelectorAll('.face').forEach(faceEl=>{
       const face=faceEl.dataset.face;
       const visible=rotatedNormalZ(face)>0.035;

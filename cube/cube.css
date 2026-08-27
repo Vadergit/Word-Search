@@ -79,9 +79,9 @@ h1{margin:0;font-size:clamp(34px,6vw,62px);line-height:.95;letter-spacing:-.055e
   position:absolute;inset:0;width:100%;height:100%;z-index:30;pointer-events:none;overflow:visible
 }
 .path-segment{stroke-linecap:round;vector-effect:non-scaling-stroke}
-.path-segment.path-under{stroke:rgba(5,15,12,.78);stroke-width:9}
-.path-segment.active-path{stroke:var(--mint);stroke-width:5;filter:drop-shadow(0 0 4px rgba(101,223,195,.72))}
-.path-segment.solved-path{stroke:var(--green);stroke-width:5;filter:drop-shadow(0 0 3px rgba(155,216,102,.55))}
+.path-segment.path-under{stroke:rgba(5,15,12,.86);stroke-width:25}
+.path-segment.active-path{stroke:var(--mint);stroke-width:17;filter:drop-shadow(0 0 7px rgba(101,223,195,.82))}
+.path-segment.solved-path{stroke:var(--green);stroke-width:16;filter:drop-shadow(0 0 6px rgba(155,216,102,.68))}
 .rotate-hint{position:absolute;top:50%;transform:translateY(-50%);font-size:9px;font-weight:950;letter-spacing:.22em;color:rgba(158,188,175,.27);pointer-events:none;user-select:none}
 .hint-left{left:18px;writing-mode:vertical-rl;transform:translateY(-50%) rotate(180deg)}
 .hint-right{right:18px;writing-mode:vertical-rl}
@@ -97,7 +97,7 @@ h1{margin:0;font-size:clamp(34px,6vw,62px);line-height:.95;letter-spacing:-.055e
   backface-visibility:hidden;
   -webkit-backface-visibility:hidden;
   transform-style:preserve-3d;
-  pointer-events:none;
+  pointer-events:auto;
 }
 .face.hit-visible{pointer-events:auto}
 .face::after{content:"";position:absolute;inset:5px;border:1px solid rgba(255,255,255,.035);pointer-events:none}
