@@ -1,0 +1,33 @@
+name: Fix v1.2.0 cache parameters
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-v120-cache.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Apply cache fix
+        run: python3 fix_v120_cache.py
+      - name: Validate
+        run: |
+          grep -q 'themes.js?v=1.2.0' index.html
+          grep -q 'cube.css?v=1.2.0' cube/index.html
+          grep -q 'cube.js?v=1.2.0' cube/index.html
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html cube/index.html
+          git diff --cached --quiet && exit 0
+          git commit -m 'Fix v1.2.0 asset cache parameters'
+          git push origin HEAD:main
