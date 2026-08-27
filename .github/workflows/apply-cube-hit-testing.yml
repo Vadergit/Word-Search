@@ -1,0 +1,35 @@
+name: Apply cube hit testing fix
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-cube-hit-testing.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Apply fix
+        run: python patch_cube_hit_testing.py
+      - name: Validate
+        run: |
+          node --check cube/cube.js
+          git diff --check
+          grep -q 'function updateFaceHitTesting()' cube/cube.js
+          grep -q '.face.hit-visible{pointer-events:auto}' cube/cube.css
+          grep -q '.tile:hover{filter:brightness' cube/cube.css
+          ! grep -q 'transform:translateZ(7px)' cube/cube.css
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add cube/cube.js cube/cube.css
+          git commit -m "Stabilize cube tile hit testing"
+          git push origin HEAD:main
