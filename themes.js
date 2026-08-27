@@ -6,23 +6,23 @@
     name: theme.name,
     words: Object.freeze([...theme.words])
   })));
-  window.ANITAS_THEME_META = Object.freeze({themeCount:19,wordCount:936});
+  window.ANITAS_THEME_META = Object.freeze({themeCount:19,wordCount:936,generatorVersion:'1.4.1'});
 })();
 
-/* Large-grid path-generation guard.
-   9x9 and 12x12 previously used recursive Hamiltonian backtracking that could
-   explode combinatorially and lock the browser. The existing generator is
-   kept intact, but its neighbour filtering is constrained to a guaranteed
-   Hamiltonian cycle for the two large grids. That turns the expensive search
-   into a linear-time path walk while leaving 6x6 behaviour unchanged. */
+/* Large-grid path-generation guard v1.4.1.
+   9x9 and 12x12 previously spent most of their time repeatedly backtracking
+   through Hamiltonian paths. These two prevalidated high-turn Hamiltonian
+   cycles satisfy the generator's turn/diagonal thresholds, so the existing
+   search returns on its first successful walk instead of repeating dozens of
+   expensive attempts. 6x6 remains completely unchanged. */
 (()=>{
   if(Array.prototype.__anitasLargeGridFilterGuard)return;
   Object.defineProperty(Array.prototype,'__anitasLargeGridFilterGuard',{value:true,configurable:false});
 
   const originalFilter=Array.prototype.filter;
   const cycles={
-    9:[0,1,2,3,4,5,6,7,8,17,16,15,14,13,12,11,10,19,20,21,22,23,24,25,26,35,34,33,32,31,30,29,28,37,38,39,40,41,42,43,44,53,52,51,50,49,48,47,46,55,56,57,58,59,60,61,62,71,80,70,79,78,69,68,77,76,67,66,75,74,65,64,73,72,63,54,45,36,27,18,9],
-    12:[0,1,2,3,4,5,6,7,8,9,10,11,23,22,21,20,19,18,17,16,15,14,13,25,26,27,28,29,30,31,32,33,34,35,47,46,45,44,43,42,41,40,39,38,37,49,50,51,52,53,54,55,56,57,58,59,71,70,69,68,67,66,65,64,63,62,61,73,74,75,76,77,78,79,80,81,82,83,95,94,93,92,91,90,89,88,87,86,85,97,98,99,100,101,102,103,104,105,106,107,119,118,117,116,115,114,113,112,111,110,109,121,122,123,124,125,126,127,128,129,130,131,143,142,141,140,139,138,137,136,135,134,133,132,120,108,96,84,72,60,48,36,24,12]
+    9:[9,0,1,10,2,3,11,21,12,4,5,13,22,14,6,7,17,8,16,26,35,25,15,23,24,34,33,43,44,53,52,62,61,71,80,70,79,69,78,77,68,76,75,67,66,74,73,63,72,64,54,45,55,65,57,56,46,36,27,37,47,48,58,59,51,60,50,42,32,41,49,39,31,40,30,38,28,20,29,19,18],
+    12:[27,38,51,40,39,50,37,48,36,49,60,72,61,62,73,74,63,75,86,85,96,84,97,108,120,133,132,121,134,135,122,109,98,110,123,111,124,136,137,126,139,138,125,113,112,99,87,100,88,101,89,76,64,77,66,53,52,65,54,41,30,42,55,43,56,67,78,90,79,92,103,102,91,104,115,114,127,116,128,141,140,129,142,143,131,130,119,107,118,117,106,105,93,80,68,81,69,82,94,95,83,70,71,59,58,47,35,46,57,44,45,34,33,22,23,11,10,21,9,8,20,31,32,19,7,18,6,5,16,29,28,17,4,15,3,2,14,1,0,13,24,12,25,26]
   };
 
   function selectedGridSize(){
@@ -74,4 +74,15 @@
     active=null;
     return result;
   };
+
+  /* Make the loaded hotfix version visible so it is obvious when Safari is
+     still serving an older cached copy of themes.js. */
+  const markVersion=()=>{
+    document.title=document.title.replace(/v1\.4\.0/g,'v1.4.1');
+    document.querySelectorAll('.start-kicker').forEach(el=>{
+      if(el.textContent.includes('v1.4.0'))el.textContent=el.textContent.replace('v1.4.0','v1.4.1');
+    });
+  };
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',markVersion,{once:true});
+  else markVersion();
 })();
