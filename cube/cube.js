@@ -291,8 +291,36 @@
     toast('New cube ready');
   }
 
+  const FACE_NORMALS={
+    front:[0,0,1],back:[0,0,-1],right:[1,0,0],left:[-1,0,0],top:[0,1,0],bottom:[0,-1,0]
+  };
+
+  function rotatedNormalZ(face){
+    const [x,y,z]=FACE_NORMALS[face];
+    const rx=rotX*Math.PI/180;
+    const ry=rotY*Math.PI/180;
+    /* CSS transform: rotateX(...) rotateY(...) => local point is rotated by Y,
+       then X. Positive resulting Z faces the viewer. */
+    const x1=x*Math.cos(ry)+z*Math.sin(ry);
+    const y1=y;
+    const z1=-x*Math.sin(ry)+z*Math.cos(ry);
+    const y2=y1*Math.cos(rx)-z1*Math.sin(rx);
+    const z2=y1*Math.sin(rx)+z1*Math.cos(rx);
+    return z2;
+  }
+
+  function updateFaceHitTesting(){
+    document.querySelectorAll('.face').forEach(faceEl=>{
+      const face=faceEl.dataset.face;
+      const visible=rotatedNormalZ(face)>0.035;
+      faceEl.classList.toggle('hit-visible',visible);
+      faceEl.setAttribute('aria-hidden',visible?'false':'true');
+    });
+  }
+
   function applyRotation(){
     cube.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg)`;
+    updateFaceHitTesting();
   }
 
   function resetView(){
