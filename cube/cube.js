@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const APP_VERSION = '1.1.0';
+  const APP_VERSION = '1.1.1';
   const GRID = 3;
   const FACE_NAMES = ['front','right','back','left','top','bottom'];
   const TILE_COUNT = FACE_NAMES.length * GRID * GRID;
@@ -690,23 +690,55 @@
   function selectedFaceCount(){ return new Set(selected.map(id=>nodeById.get(id).face)).size; }
 
   function updateSelectionUI(){
-    const word=selectedWord(),faces=selectedFaceCount(); currentWordEl.textContent=word||'Tap a tile to start';
-    selectionMetaEl.textContent=selected.length?`${selected.length} tile${selected.length===1?'':'s'} · ${faces} face${faces===1?'':'s'} · timer pauses while rotating`:'8 seconds after every tile · or press Check word';
+    const word=selectedWord(),faces=selectedFaceCount();
+    currentWordEl.textContent=word||'Tap a tile to start';
+    if(selected.length && rotating && timerPausedForRotation){
+      selectionMetaEl.textContent=`Timer paused while rotating · ${(timerRemaining/1000).toFixed(1)}s remaining`;
+    }else{
+      selectionMetaEl.textContent=selected.length?`${selected.length} tile${selected.length===1?'':'s'} · ${faces} face${faces===1?'':'s'} · 8s timer`:'8 seconds after every tile · or press Check word';
+    }
     checkBtn.disabled=selected.length<3; clearBtn.disabled=selected.length===0;
   }
 
+  function setTimerBarImmediate(percent){
+    timerBar.style.transition='none';
+    timerBar.style.width=`${Math.max(0,Math.min(100,percent))}%`;
+    /* Force the browser to commit the frozen width before another transition can start. */
+    void timerBar.offsetWidth;
+  }
+
   function startSelectionTimer(duration){
-    clearTimeout(timerId); timerRemaining=Math.max(1,duration); timerStartedAt=performance.now(); timerId=setTimeout(evaluateSelection,timerRemaining);
-    timerBar.style.transition='none'; timerBar.style.width=`${Math.max(0,Math.min(100,timerRemaining/SELECTION_MS*100))}%`;
-    requestAnimationFrame(()=>requestAnimationFrame(()=>{ timerBar.style.transition=`width ${timerRemaining}ms linear`; timerBar.style.width='0%'; }));
+    clearTimeout(timerId);
+    timerRemaining=Math.max(1,duration);
+    timerStartedAt=performance.now();
+    timerId=setTimeout(evaluateSelection,timerRemaining);
+    setTimerBarImmediate(timerRemaining/SELECTION_MS*100);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      if(!timerId || rotating) return;
+      timerBar.style.transition=`width ${timerRemaining}ms linear`;
+      timerBar.style.width='0%';
+    }));
   }
 
   function pauseSelectionTimer(){
-    if(!timerId) return false; timerRemaining=Math.max(0,timerRemaining-(performance.now()-timerStartedAt)); clearTimeout(timerId); timerId=null;
-    timerBar.style.transition='none'; timerBar.style.width=`${Math.max(0,Math.min(100,timerRemaining/SELECTION_MS*100))}%`; return true;
+    if(!timerId) return false;
+    timerRemaining=Math.max(1,timerRemaining-(performance.now()-timerStartedAt));
+    clearTimeout(timerId);
+    timerId=null;
+    setTimerBarImmediate(timerRemaining/SELECTION_MS*100);
+    return true;
   }
-  function resumeSelectionTimer(){ if(selected.length && timerRemaining>0) startSelectionTimer(timerRemaining); }
-  function stopSelectionTimer(){ clearTimeout(timerId); timerId=null; timerRemaining=SELECTION_MS; timerBar.style.transition='none'; timerBar.style.width='0%'; }
+
+  function resumeSelectionTimer(){
+    if(selected.length && timerRemaining>0) startSelectionTimer(timerRemaining);
+  }
+
+  function stopSelectionTimer(){
+    clearTimeout(timerId);
+    timerId=null;
+    timerRemaining=SELECTION_MS;
+    setTimerBarImmediate(0);
+  }
   function clearSelection(){ evaluating=false; stopSelectionTimer(); selected=[]; updateSelectionUI(); draw(); }
 
   function evaluateSelection(){
@@ -808,7 +840,15 @@
     if(event.button!==undefined && event.button!==0) return;
     const hit=hitTile(event.clientX,event.clientY);
     if(hit!==null){ event.preventDefault(); selectTile(hit); return; }
-    rotating=true; dragPointerId=event.pointerId; lastPointerX=event.clientX; lastPointerY=event.clientY; canvas.setPointerCapture(event.pointerId); timerPausedForRotation=pauseSelectionTimer(); stage.classList.add('rotating');
+
+    rotating=true;
+    dragPointerId=event.pointerId;
+    lastPointerX=event.clientX;
+    lastPointerY=event.clientY;
+    timerPausedForRotation=pauseSelectionTimer();
+    updateSelectionUI();
+    try{canvas.setPointerCapture(event.pointerId)}catch(_){/* optional */}
+    stage.classList.add('rotating');
   }
 
   function onPointerMove(event){
@@ -819,13 +859,28 @@
     const hit=hitTile(event.clientX,event.clientY); if(hit!==hoverTileId){ hoverTileId=hit; canvas.style.cursor=hit!==null?'pointer':'grab'; }
   }
 
-  function onPointerEnd(event){
-    if(!rotating || event.pointerId!==dragPointerId) return; rotating=false; dragPointerId=null; stage.classList.remove('rotating'); canvas.style.cursor='grab';
-    if(timerPausedForRotation){ timerPausedForRotation=false; resumeSelectionTimer(); }
+  function finishRotation(event=null){
+    if(!rotating) return;
+    if(event && event.pointerId!==undefined && dragPointerId!==null && event.pointerId!==dragPointerId) return;
+    rotating=false;
+    dragPointerId=null;
+    stage.classList.remove('rotating');
+    canvas.style.cursor='grab';
+    const shouldResume=timerPausedForRotation;
+    timerPausedForRotation=false;
+    updateSelectionUI();
+    if(shouldResume) resumeSelectionTimer();
   }
 
+  function onPointerEnd(event){ finishRotation(event); }
+
   function bindEvents(){
-    canvas.addEventListener('pointerdown',onPointerDown); canvas.addEventListener('pointermove',onPointerMove); canvas.addEventListener('pointerup',onPointerEnd); canvas.addEventListener('pointercancel',onPointerEnd);
+    canvas.addEventListener('pointerdown',onPointerDown);
+    canvas.addEventListener('pointermove',onPointerMove);
+    canvas.addEventListener('pointerup',onPointerEnd);
+    canvas.addEventListener('pointercancel',onPointerEnd);
+    canvas.addEventListener('lostpointercapture',()=>finishRotation());
+    window.addEventListener('blur',()=>finishRotation());
     checkBtn.addEventListener('click',evaluateSelection); clearBtn.addEventListener('click',clearSelection); hintBtn.addEventListener('click',showHint); newBtn.addEventListener('click',newPuzzle); resetViewBtn.addEventListener('click',()=>resetView(true)); nextCubeBtn.addEventListener('click',newPuzzle); themeBtn.addEventListener('click',()=>applyTheme(currentTheme==='light'?'dark':'light'));
     switchProfileBtn.addEventListener('click',()=>{localStorage.removeItem('anitasWordPathActiveProfile');sessionStorage.removeItem('anitasWordPathActiveProfile');window.location.href='../';});
     document.addEventListener('keydown',event=>{ if(event.key==='Escape') clearSelection(); if(event.key==='Enter' && selected.length>=3) evaluateSelection(); });
