@@ -166,3 +166,5 @@ html[data-theme="light"] .howto em{color:#29453b}
 html[data-theme="light"] .toast{background:#ffffff;color:#233a32;box-shadow:0 14px 40px rgba(30,70,55,.18)}
 html[data-theme="light"] .win{background:rgba(228,239,233,.82)}
 html[data-theme="light"] .win-card{background:#ffffff;box-shadow:0 30px 90px rgba(30,70,55,.20)}
+
+.profile-badge{display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:999px;padding:9px 12px;background:var(--panel-soft);color:var(--text);font-size:12px;font-weight:900;white-space:nowrap}

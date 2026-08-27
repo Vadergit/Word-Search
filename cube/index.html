@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" id="themeColorMeta" content="#091311" />
-  <title>Anitas Word Cube · v0.8.0</title>
+  <meta name="theme-color" id="themeColorMeta" content="#f3f7f4" />
+  <title>Anitas Word Cube · v1.0.0</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23091311'/%3E%3Cg fill='none' stroke='%2359c9c4' stroke-width='5' stroke-linecap='round'%3E%3Cpath d='M18 18h14v14H18zM32 32h14v14H32zM25 25l14 14'/%3E%3C/g%3E%3C/svg%3E" />
   <link rel="stylesheet" href="cube.css?v=0.8.0" />
 </head>
@@ -12,13 +12,16 @@
   <main class="app-shell">
     <header class="topbar">
       <div>
-        <div class="eyebrow">3D prototype <span class="version-badge">v0.8.0</span></div>
+        <div class="eyebrow">3D game <span class="version-badge">v1.0.0</span></div>
         <h1>Anitas Word Cube</h1>
         <p>Find words across a rotatable 3×3 cube. Paths may continue over cube edges onto another face.</p>
       </div>
       <div class="top-actions">
-        <a class="ghost-btn" href="../">2D game</a>
-        <button class="ghost-btn" id="themeBtn" type="button" aria-pressed="false">Light mode</button>
+        <span class="profile-badge" id="cubePlayerName">Player</span>
+        <a class="ghost-btn" href="../">Game menu</a>
+        <a class="ghost-btn" href="../stats.html">Statistics</a>
+        <button class="ghost-btn" id="switchProfileBtn" type="button">Switch player</button>
+        <button class="ghost-btn" id="themeBtn" type="button" aria-pressed="true">Dark mode</button>
         <button class="ghost-btn" id="resetViewBtn" type="button">Reset view</button>
         <button class="primary-btn small" id="newBtn" type="button">New cube</button>
       </div>
@@ -64,7 +67,7 @@
             <div><span id="wordThemeName">Cosmic set</span><h2>Target words</h2></div>
             <div class="face-badge">3×3 × 6</div>
           </div>
-          <p class="section-copy">Each new cube rotates through 14 curated themes with 600+ target words. Every tile still belongs to exactly one target route, all 54 letters are covered, and every target has exactly one valid path.</p>
+          <p class="section-copy">The 3D cube uses the same 19 themes and 936+ theme words as the 2D game. Every tile belongs to exactly one target route, all 54 letters are covered, and every target has exactly one valid path.</p>
           <div class="target-list" id="targetList"></div>
         </div>
 
@@ -95,6 +98,7 @@
     </div>
   </div>
 
+  <script src="../themes.js?v=1.0.0"></script>
   <script src="../words.js"></script>
   <script src="cube.js?v=0.8.0"></script>
 </body>

@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const APP_VERSION = '0.8.0';
+  const APP_VERSION = '1.0.0';
   const GRID = 3;
   const FACE_NAMES = ['front','right','back','left','top','bottom'];
   const TILE_COUNT = FACE_NAMES.length * GRID * GRID;
@@ -14,26 +14,35 @@
   const TILE_HALF = 0.43;
   const CAMERA_Z = 6.7;
 
-  const WORD_THEMES = [
-    {name:'Cosmic',words:['ASTEROID','ECLIPSE','STELLAR','GRAVITY','CAPSULE','SHUTTLE','VOYAGER','NEBULA','GALAXY','METEOR','ROCKET','PLANET','COSMOS','SATURN','URANUS','MERCURY','JUPITER','ORBIT','COMET','LUNAR','SOLAR','VENUS','MARS','EARTH','MOON','SPACE','NOVA','QUASAR','PULSAR','PHOTON','AURORA','CRATER','MODULE','ALIEN','SIGNAL','PROBE','ROVER','TITAN','ORION','APOLLO','ZENITH','VACUUM','PLASMA','HELIUM','FUSION','COSMIC','STAR','ASTRO']},
-    {name:'Ocean',words:['OCEAN','WHALE','SHARK','CORAL','REEF','TURTLE','DOLPHIN','OCTOPUS','ANCHOR','SAILOR','ISLAND','COAST','BEACH','WAVES','TIDAL','CURRENT','HARBOR','SEAL','ORCA','MANTA','CRAB','LOBSTER','SEAHORSE','PEARL','SHELL','STORMS','DEEP','ABYSS','PLANKTON','SEAGRASS','KELP','MARINE','SURF','BOAT','SHIP','DECK','PORT','BUOY','TRIDENT','NAUTILUS']},
-    {name:'Nature',words:['FOREST','RIVER','VALLEY','MOUNTAIN','MEADOW','FLORA','FAUNA','LEAVES','BRANCH','ROOTS','STONE','ROCK','WATER','STREAM','LAKE','FIELD','GRASS','MOSS','FERN','MAPLE','CEDAR','PINE','BIRCH','DAISY','ROSE','TULIP','ORCHID','LOTUS','SUNSET','SUNRISE','RAIN','STORM','CLOUD','WIND','BREEZE','THUNDER','LIGHTNING','CANYON','CLIFF','GLACIER','DESERT','PRAIRIE','JUNGLE']},
-    {name:'Animals',words:['TIGER','LION','BEAR','WOLF','HORSE','ZEBRA','GIRAFFE','MONKEY','GORILLA','PANDA','KOALA','RABBIT','OTTER','BEAVER','BADGER','MOOSE','DEER','CAMEL','LLAMA','ALPACA','EAGLE','FALCON','HAWK','PARROT','PUFFIN','PENGUIN','SWAN','DUCK','GECKO','LIZARD','IGUANA','TURTLE','SNAKE','FROG','TOAD','SALMON','TROUT','SHARK','WHALE','DOLPHIN','ORCA','MANTIS','BEETLE','BUTTERFLY','SPIDER']},
-    {name:'Adventure',words:['TRAIL','QUEST','EXPLORE','JOURNEY','COMPASS','MAPS','CAMP','CAMPING','TENT','HIKE','CLIMB','RAFTING','KAYAK','CANOE','ROPE','SUMMIT','VALLEY','CANYON','BRIDGE','CAVE','TORCH','PACK','BACKPACK','BOOTS','GUIDE','PATH','TRACK','ROUTE','ESCAPE','TREASURE','ISLAND','SHIP','SAILING','FOREST','RIVER','MOUNTAIN','GLACIER','DESERT','JUNGLE','VOYAGE','DISCOVER','WANDER','OUTDOOR']},
-    {name:'Fantasy',words:['DRAGON','WIZARD','CASTLE','KNIGHT','MAGIC','SPELL','POTION','FAIRY','GIANT','GOBLIN','TROLL','PHOENIX','UNICORN','MERMAID','THRONE','CROWN','SWORD','SHIELD','ARMOR','QUEST','TOWER','DUNGEON','CRYSTAL','RUNE','SPELLBOOK','WAND','CHARM','PORTAL','SHADOW','FOREST','KINGDOM','PRINCESS','PRINCE','QUEEN','KING','ROYAL','BEAST','MYTHIC','LEGEND','ORACLE','SPIRIT']},
-    {name:'Science',words:['ATOM','MOLECULE','CELL','GENOME','LASER','PHOTON','QUANTUM','ENERGY','MATTER','FORCE','GRAVITY','ORBIT','PLASMA','FUSION','NEURON','TISSUE','PROTEIN','ENZYME','CARBON','OXYGEN','HELIUM','NEON','METAL','CRYSTAL','MINERAL','FOSSIL','PLANET','COMET','STAR','GALAXY','BEAKER','FLASK','TEST','THEORY','MODEL','DATA','LOGIC','NUMBER','VECTOR','MATRIX','ANGLE','FORMULA','REACTION','ACID','BASE','ELECTRON','PROTON','NEUTRON']},
-    {name:'Technology',words:['CODE','ROBOT','SERVER','CLOUD','PIXEL','SCREEN','SENSOR','CAMERA','DEVICE','PHONE','TABLET','LAPTOP','KEYBOARD','MOUSE','ROUTER','MODEM','NETWORK','PACKET','SIGNAL','BINARY','DIGITAL','SYSTEM','KERNEL','MEMORY','STORAGE','DRIVER','BROWSER','SOCKET','CLIENT','SCRIPT','ENGINE','LOGIC','ARRAY','OBJECT','STRING','BUFFER','CACHE','THREAD','PROCESS','CHIP','CIRCUIT','FIRMWARE','HARDWARE','SOFTWARE','ANDROID','LINUX','WINDOWS']},
-    {name:'Bouldering',words:['BOULDER','PROBLEM','CIRCUIT','CAMPUS','MANTLE','DYNO','HEELHOOK','TOEHOOK','CRIMP','SLOPER','PINCH','JUGS','CHALK','BRUSH','BETA','FLASH','SEND','PROJECT','SPOTTER','START','ARETE','SLAB','ROOF','VOLUME','HOLDS','GRIP','POWER','TENSION','CORE','BALANCE','STATIC','DYNAMIC','FOOTWORK','MATCH','CROSS','GASTON','UNDERCLING','SIDEPULL','LOCKOFF','ROUTE','CRUX','MOVE','REACH','SMEAR','EDGING']},
-    {name:'Climbing',words:['CLIMB','CRIMP','SLOPER','PINCH','BELAY','ROPE','ANCHOR','CARABINER','HARNESS','CHALK','ROUTE','PITCH','CLIP','QUICKDRAW','ASCEND','DESCENT','LEDGE','CRUX','BETA','SLAB','ARETE','CHIMNEY','OVERHANG','MANTLE','FLAGGING','SMEAR','EDGING','CAMMING','NUTS','RAPPEL','WALL','SUMMIT','GEAR','BOLT','HANGER','FOOTHOLD','HANDHOLD','LOCKOFF','SIDEPULL','GASTON','JAMMING','BRIDGE','TRAVERSE','LEAD','TOPROPE']},
-    {name:'Tricking',words:['BACKFLIP','FRONTFLIP','CARTWHEEL','TORNADO','KICK','HOOK','ROUND','AERIAL','GAINER','CORK','SCOOT','RAIZ','SWIPE','TWIST','COMBO','LANDING','TAKEOFF','SPIN','FLIP','KICKS','TRICK','STANCE','SETUP','FLOW','POWER','SPEED','HEIGHT','CONTROL','BALANCE','SWING','WRAP','HYPER','ROUNDKICK','HOOKKICK','CHEAT','MASTER','TRAIN','SESSION','FLOOR','STYLE','LINK','CHAIN','ROTATE']},
-    {name:'Food',words:['APPLE','BANANA','ORANGE','GRAPE','LEMON','LIME','PEACH','MANGO','BERRY','CHERRY','MELON','BREAD','PASTA','PIZZA','RICE','CHEESE','BUTTER','CREAM','YOGURT','HONEY','SUGAR','SALT','PEPPER','SPICE','CURRY','SOUP','SALAD','STEAK','CHICKEN','FISH','SALMON','BURGER','TACO','WRAP','NOODLE','COOKIE','CAKE','MUFFIN','WAFFLE','PANCAKE','COFFEE','JUICE','COCOA','CHOCOLATE']},
-    {name:'Travel',words:['AIRPORT','FLIGHT','TICKET','PASSPORT','LUGGAGE','HOTEL','HOSTEL','TRAIN','TAXI','METRO','FERRY','CRUISE','BEACH','ISLAND','CITY','VILLAGE','MARKET','MUSEUM','TEMPLE','CASTLE','SQUARE','BRIDGE','STREET','ROAD','ROUTE','MAPS','GUIDE','TOUR','PHOTO','TRIP','JOURNEY','VOYAGE','ARRIVAL','DEPARTURE','BORDER','CUSTOMS','STAMP','CAMERA','SUITCASE','RESORT','CABIN','TENT','TRAVEL','PLANE','PORT']},
-    {name:'Music',words:['MUSIC','PIANO','GUITAR','DRUMS','VIOLIN','TRUMPET','FLUTE','CELLO','BASS','SAXOPHONE','CHORD','MELODY','RHYTHM','BEAT','TEMPO','SCALE','SONG','LYRICS','VOICE','SINGER','BAND','ALBUM','TRACK','STUDIO','RECORD','CONCERT','STAGE','MICROPHONE','SPEAKER','HEADSET','MIXER','CHORUS','VERSE','BRIDGE','HARMONY','OCTAVE','NOTE','SOUND','TUNE','DANCE']},
-  ];
+  const WORD_THEMES = (window.ANITAS_THEME_POOLS||[]).map(theme=>({name:theme.name,words:[...theme.words]}));
+  if(!WORD_THEMES.length)throw new Error('Shared theme library failed to load.');
   const WORD_THEME_WORD_COUNT = WORD_THEMES.reduce((sum,theme)=>sum+new Set(theme.words).size,0);
-  const SPACE_WORDS = WORD_THEMES[0].words;
   const LETTER_POOL = 'EEEEEEEEEEEEAAAAAAAAAIIIIIIIIOOOOOOOONNNNNNRRRRRRTTTTTTLLLLSSSSUUUUDDDDGGGBBCCMMPPFFHHVVWWYYKJXQZ';
   const ENGLISH_WORDS = window.ANITAS_ENGLISH_WORDS instanceof Set ? window.ANITAS_ENGLISH_WORDS : new Set();
+  const LOCAL_PROFILE_NAMES = new Set(['Anita','Dario']);
+  const activeProfileName = localStorage.getItem('anitasWordPathActiveProfile') || '';
+  if(!LOCAL_PROFILE_NAMES.has(activeProfileName)){
+    window.location.replace('../');
+    return;
+  }
+  const UNLOCK_THRESHOLDS = {Tricking:1,Bouldering:2,Climbing:3};
+  const DEFAULT_STATS = {
+    totalPuzzles:0,totalWords:0,totalBonus:0,bestCombo:0,bestScore:0,longestWord:'',
+    dailyStreak:0,lastDailyDate:'',recentWords:[],themeProgress:{},dailyBest:{},soundEnabled:true,
+    completedPuzzles:[],completedFingerprints:[],cubePuzzles:0,cubeWords:0,cubeBonus:0,cubeBestScore:0
+  };
+  function profileStorageKey(){ return `anitasWordPathStats:${activeProfileName}`; }
+  function loadPlayerStats(){
+    try{
+      const raw=JSON.parse(localStorage.getItem(profileStorageKey())||'null')||{};
+      return {...DEFAULT_STATS,...raw,recentWords:raw.recentWords||[],themeProgress:raw.themeProgress||{},dailyBest:raw.dailyBest||{},completedPuzzles:raw.completedPuzzles||[],completedFingerprints:raw.completedFingerprints||[]};
+    }catch(_){ return {...DEFAULT_STATS}; }
+  }
+  let playerStats=loadPlayerStats();
+  function savePlayerStats(){ try{localStorage.setItem(profileStorageKey(),JSON.stringify(playerStats))}catch(_){} }
+  function isThemeUnlocked(name){ return playerStats.totalPuzzles >= (UNLOCK_THRESHOLDS[name]||0); }
+  function availableWordThemes(){ const unlocked=WORD_THEMES.filter(theme=>isThemeUnlocked(theme.name)); return unlocked.length?unlocked:WORD_THEMES; }
+  function hashText(value){ let h=2166136261; for(let i=0;i<value.length;i++){h^=value.charCodeAt(i);h=Math.imul(h,16777619)} return h>>>0; }
 
   const V = {
     add:(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]],
@@ -74,6 +83,8 @@
   const winText = document.getElementById('winText');
   const nextCubeBtn = document.getElementById('nextCubeBtn');
   const wordThemeNameEl = document.getElementById('wordThemeName');
+  const cubePlayerNameEl = document.getElementById('cubePlayerName');
+  const switchProfileBtn = document.getElementById('switchProfileBtn');
 
   const nodes = [];
   const nodeById = new Map();
@@ -116,6 +127,9 @@
   let currentTheme = 'dark';
   let activeWordTheme = WORD_THEMES[0];
   let previousWordThemeName = '';
+  let cubePuzzleCode = '';
+  let cubePuzzleFingerprint = '';
+  let cubeRecorded = false;
 
   const CANVAS_THEME = {
     dark:{
@@ -145,8 +159,8 @@
   }
 
   function initTheme(){
-    let saved='dark';
-    try{ saved=localStorage.getItem(THEME_KEY)||'dark'; }catch(_){ /* local storage unavailable */ }
+    let saved='light';
+    try{ saved=localStorage.getItem(THEME_KEY)||'light'; }catch(_){ /* local storage unavailable */ }
     applyTheme(saved,false);
   }
 
@@ -266,7 +280,8 @@
   }
 
   function chooseCoverWords(pool,total=TILE_COUNT){
-    const words=shuffle([...new Set(pool)].filter(w=>w.length>=4 && w.length<=10));
+    const recent=new Set(playerStats.recentWords||[]);
+    const words=shuffle([...new Set(pool)].filter(w=>w.length>=3 && w.length<=14)).sort((a,b)=>Number(recent.has(a))-Number(recent.has(b)));
     const states=new Map([[`0:0`,[]]]);
     for(const word of words){
       const snapshot=[...states.entries()];
@@ -279,7 +294,7 @@
         if(!states.has(nextKey)) states.set(nextKey,[...list,word]);
       }
     }
-    for(const count of [8,9,10,7]){
+    for(const count of [7,8,9,10,6,11,5,12,4]){
       const hit=states.get(`${total}:${count}`);
       if(hit) return shuffle(hit);
     }
@@ -363,8 +378,9 @@
     const route=coverRoute();
     if(!route) throw new Error('Full-cover cube route is invalid.');
 
-    const alternatives=WORD_THEMES.filter(theme=>theme.name!==previousWordThemeName);
-    const themeOrder=shuffle(alternatives.length?alternatives:WORD_THEMES);
+    const available=availableWordThemes();
+    const alternatives=available.filter(theme=>theme.name!==previousWordThemeName);
+    const themeOrder=shuffle(alternatives.length?alternatives:available);
     const maxThemes=Math.min(4,themeOrder.length);
 
     for(let themeIndex=0;themeIndex<maxThemes;themeIndex++){
@@ -605,9 +621,19 @@
     return hits[0]?.id ?? null;
   }
 
+  function makeCubeFingerprint(){
+    const targetKey=[...targets].sort().join(',');
+    return `CUBE-${activeWordTheme.name}-${hashText(`${board.join('')}|${targetKey}`).toString(36).toUpperCase()}`;
+  }
+
   function newPuzzle(){
     stopSelectionTimer(); selected=[]; foundTargets=new Set(); foundBonus=new Set(); foundPathByWord=new Map(); solvedNodes=new Set(); cubeCleared=false;
-    score=0; bonusScore=0; crossFaceFinds=0; evaluating=false; winEl.classList.remove('show'); generatePuzzle(); wordThemeNameEl.textContent=`${activeWordTheme.name} set`; renderTargets(); renderBonus(); updateSelectionUI(); updateStats(); resetView(false); draw(); toast(`New ${activeWordTheme.name} cube · v${APP_VERSION}`);
+    score=0; bonusScore=0; crossFaceFinds=0; evaluating=false; cubeRecorded=false; winEl.classList.remove('show');
+    let guard=0;
+    do{ generatePuzzle(); cubePuzzleFingerprint=makeCubeFingerprint(); guard++; }
+    while(playerStats.completedFingerprints.includes(cubePuzzleFingerprint) && guard<24);
+    cubePuzzleCode=`WC-${Date.now().toString(36).toUpperCase()}-${activeWordTheme.name.toUpperCase()}`;
+    wordThemeNameEl.textContent=`${activeWordTheme.name} set`; renderTargets(); renderBonus(); updateSelectionUI(); updateStats(); resetView(false); draw(); toast(`New ${activeWordTheme.name} cube · ${activeProfileName} · v${APP_VERSION}`);
   }
 
   function resetView(animate=true){ rotX=-22; rotY=-32; draw(); if(animate){ stage.classList.add('settling'); setTimeout(()=>stage.classList.remove('settling'),180); } }
@@ -688,7 +714,34 @@
   }
 
   function updateStats(){ foundStat.textContent=`${foundTargets.size}/${targets.length}`; scoreStat.textContent=score.toLocaleString(); bonusStat.textContent=String(foundBonus.size); crossStat.textContent=String(crossFaceFinds); }
-  function showWin(){ cubeCleared=true; draw(); winText.textContent=`You cleared the ${activeWordTheme.name} cube: all ${TILE_COUNT} letters, ${targets.length} target words, ${crossFaceFinds} cross-face finds and ${score.toLocaleString()} points.`; setTimeout(()=>winEl.classList.add('show'),260); }
+  function recordCubeCompletion(){
+    if(cubeRecorded)return;
+    cubeRecorded=true;
+    playerStats.totalPuzzles=(playerStats.totalPuzzles||0)+1;
+    playerStats.totalWords=(playerStats.totalWords||0)+targets.length;
+    playerStats.totalBonus=(playerStats.totalBonus||0)+foundBonus.size;
+    playerStats.bestScore=Math.max(playerStats.bestScore||0,score);
+    const longest=targets.reduce((best,word)=>word.length>best.length?word:best,'');
+    if(longest.length>(playerStats.longestWord||'').length)playerStats.longestWord=longest;
+    playerStats.recentWords=[...new Set([...targets,...(playerStats.recentWords||[])])].slice(0,45);
+    const tp=playerStats.themeProgress[activeWordTheme.name]||{puzzles:0,words:0};
+    tp.puzzles++; tp.words+=targets.length; playerStats.themeProgress[activeWordTheme.name]=tp;
+    playerStats.completedPuzzles=[...new Set([cubePuzzleCode,...(playerStats.completedPuzzles||[])])].slice(0,3000);
+    playerStats.completedFingerprints=[...new Set([cubePuzzleFingerprint,...(playerStats.completedFingerprints||[])])].slice(0,3000);
+    playerStats.cubePuzzles=(playerStats.cubePuzzles||0)+1;
+    playerStats.cubeWords=(playerStats.cubeWords||0)+targets.length;
+    playerStats.cubeBonus=(playerStats.cubeBonus||0)+foundBonus.size;
+    playerStats.cubeBestScore=Math.max(playerStats.cubeBestScore||0,score);
+    savePlayerStats();
+  }
+
+  function showWin(){
+    cubeCleared=true;
+    recordCubeCompletion();
+    draw();
+    winText.textContent=`${activeProfileName}, you cleared the ${activeWordTheme.name} cube: all ${TILE_COUNT} letters, ${targets.length} target words, ${crossFaceFinds} cross-face finds and ${score.toLocaleString()} points.`;
+    setTimeout(()=>winEl.classList.add('show'),260);
+  }
   function toast(message,type=''){ clearTimeout(toastTimer); toastEl.textContent=message; toastEl.className=`toast show ${type}`; toastTimer=setTimeout(()=>toastEl.className='toast',1900); }
 
   function onPointerDown(event){
@@ -714,10 +767,11 @@
   function bindEvents(){
     canvas.addEventListener('pointerdown',onPointerDown); canvas.addEventListener('pointermove',onPointerMove); canvas.addEventListener('pointerup',onPointerEnd); canvas.addEventListener('pointercancel',onPointerEnd);
     checkBtn.addEventListener('click',evaluateSelection); clearBtn.addEventListener('click',clearSelection); newBtn.addEventListener('click',newPuzzle); resetViewBtn.addEventListener('click',()=>resetView(true)); nextCubeBtn.addEventListener('click',newPuzzle); themeBtn.addEventListener('click',()=>applyTheme(currentTheme==='light'?'dark':'light'));
+    switchProfileBtn.addEventListener('click',()=>{localStorage.removeItem('anitasWordPathActiveProfile');sessionStorage.removeItem('anitasWordPathActiveProfile');window.location.href='../';});
     document.addEventListener('keydown',event=>{ if(event.key==='Escape') clearSelection(); if(event.key==='Enter' && selected.length>=3) evaluateSelection(); });
     if('ResizeObserver' in window) new ResizeObserver(resizeCanvas).observe(stage); else window.addEventListener('resize',resizeCanvas);
   }
 
-  try{ buildGraph(); validateCrossFaceGeometry(); bindEvents(); initTheme(); resizeCanvas(); newPuzzle(); }
+  try{ cubePlayerNameEl.textContent=activeProfileName; buildGraph(); validateCrossFaceGeometry(); bindEvents(); initTheme(); resizeCanvas(); newPuzzle(); }
   catch(error){ console.error(error); currentWordEl.textContent='Could not generate cube'; selectionMetaEl.textContent='Reload the page to try again.'; }
 })();

@@ -32,6 +32,7 @@
     .error{min-height:18px;color:#a3473c;font-size:12px;margin-top:8px}
     .top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:18px}.top-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
     .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:16px}
+    .mode-summary{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:16px}
     .summary-card{border:1px solid var(--line);background:#f8faf7;border-radius:16px;padding:14px}
     .summary-card span{display:block;color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.1em;font-weight:900;margin-bottom:5px}
     .summary-card b{display:block;font-size:27px;letter-spacing:-.04em}.summary-card small{display:block;color:var(--muted);font-size:10px;margin-top:3px}
@@ -75,6 +76,11 @@
       <div class="summary-card"><span>This week</span><b id="weekCount">0</b><small>Monday – Sunday</small></div>
       <div class="summary-card"><span>Average / day</span><b id="dayAverage">0.0</b><small>calendar average</small></div>
       <div class="summary-card"><span>Best day</span><b id="bestCount">0</b><small id="bestDate">—</small></div>
+    </div>
+
+    <div class="mode-summary">
+      <div class="summary-card"><span>2D Word Path</span><b id="pathPuzzles">0</b><small>completed puzzles</small></div>
+      <div class="summary-card"><span>3D Word Cube</span><b id="cubePuzzles">0</b><small>completed cubes</small></div>
     </div>
 
     <div class="section">
@@ -123,6 +129,8 @@
   const days=document.getElementById("days");
   const note=document.getElementById("note");
   const switchBtn=document.getElementById("switchBtn");
+  const pathPuzzles=document.getElementById("pathPuzzles");
+  const cubePuzzles=document.getElementById("cubePuzzles");
 
   let pendingProfile="";
 
@@ -152,6 +160,7 @@
     let m=String(code).match(/^DAILY-(\d{4}-\d{2}-\d{2})-/i);
     if(m)return dateFromKey(m[1]);
     m=String(code).match(/^WP-(?:CLASSIC|MIXED|MYSTERY|CHALLENGE)-(?:6|9|12)-(?:BEGINNER|MIDDLE|HARD)-([0-9A-Z]+)-/i);
+    if(!m)m=String(code).match(/^WC-([0-9A-Z]+)-/i);
     if(!m)return null;
     const ms=parseInt(m[1],36);
     if(!Number.isFinite(ms)||ms<1577836800000||ms>Date.now()+86400000)return null;
@@ -192,7 +201,11 @@
     datedEntries.forEach(([key,count])=>{if(count>best){best=count;bestKey=key}});
 
     title.textContent=`${name} · Statistics`;
-    subtitle.textContent=`${stats.totalPuzzles||0} puzzles completed in this local profile`;
+    const cubeTotal=stats.cubePuzzles||0;
+    const pathTotal=Math.max(0,(stats.totalPuzzles||0)-cubeTotal);
+    subtitle.textContent=`${stats.totalPuzzles||0} puzzles completed in this local profile · 2D and 3D combined`;
+    pathPuzzles.textContent=pathTotal;
+    cubePuzzles.textContent=cubeTotal;
     todayCount.textContent=map[todayKey]||0;
     weekCount.textContent=thisWeekTotal;
     dayAverage.textContent=(datedCount/calendarDays).toFixed(1);

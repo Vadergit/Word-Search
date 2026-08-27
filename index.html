@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Anitas Word Path</title>
+  <title>Anitas Word Path · v1.0.0</title>
   <style>
     :root{
       --bg:#f4f6f2;
@@ -308,6 +308,8 @@
     .win-card button{width:100%;margin-top:10px}
 
 
+    .choice-grid.game-types{grid-template-columns:repeat(2,1fr)}
+    .choice-grid.game-types .choice{min-height:92px}
     .choice-grid.modes{grid-template-columns:repeat(5,1fr)}
     .choice-grid.modes .choice{min-height:78px;padding:13px 10px}
     .choice-grid.modes .choice strong{font-size:15px}
@@ -394,7 +396,7 @@
 <body>
 <main class="app">
   <section class="login-screen" id="loginScreen">
-    <div class="start-kicker">Local profiles</div>
+    <div class="start-kicker">Local profiles · v1.0.0</div>
     <h1>Anitas Word Path</h1>
     <p>Choose your profile and enter the local PIN. Progress stays only in this browser and is never uploaded.</p>
     <div class="profile-grid" id="profileGrid">
@@ -411,19 +413,27 @@
 
   <section class="start-screen hidden" id="startScreen">
     <div class="player-bar"><div><strong id="startPlayerName">Player</strong><span>Local profile</span></div><div style="display:flex;gap:7px;flex-wrap:wrap"><a class="btn secondary" href="stats.html">Statistics</a><button class="btn secondary" id="switchProfileStartBtn" type="button">Switch player</button></div></div>
-    <div class="start-kicker">Offline word game</div>
+    <div class="start-kicker">Word game suite · v1.0.0</div>
     <h1>Anitas Word Path</h1>
     <p class="start-intro">
       Choose the grid size and difficulty before starting. The game now includes many more themes and a much larger offline word pool. Once the run begins, every following puzzle keeps the same mode until you choose “Change mode”.
     </p>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:-16px;margin-bottom:22px;">
-      <span style="padding:6px 9px;border-radius:999px;background:#f1f5f1;border:1px solid #e1e8e1;font-size:11px;font-weight:800;color:#5f6d64;">19 themes</span>
-      <span style="padding:6px 9px;border-radius:999px;background:#f1f5f1;border:1px solid #e1e8e1;font-size:11px;font-weight:800;color:#5f6d64;">879+ theme words</span>
+      <span style="padding:6px 9px;border-radius:999px;background:#f1f5f1;border:1px solid #e1e8e1;font-size:11px;font-weight:800;color:#5f6d64;">19 shared themes</span>
+      <span style="padding:6px 9px;border-radius:999px;background:#f1f5f1;border:1px solid #e1e8e1;font-size:11px;font-weight:800;color:#5f6d64;">936+ shared theme words</span>
       <span style="padding:6px 9px;border-radius:999px;background:#f1f5f1;border:1px solid #e1e8e1;font-size:11px;font-weight:800;color:#5f6d64;">20k+ bonus words</span>
       <span style="padding:6px 9px;border-radius:999px;background:#f1f5f1;border:1px solid #e1e8e1;font-size:11px;font-weight:800;color:#5f6d64;">100% offline</span>
     </div>
 
     <div class="setting-section">
+      <h2 class="setting-title">Game type</h2>
+      <div class="choice-grid game-types" id="gameTypeChoices">
+        <button class="choice selected" type="button" data-game-type="2d"><strong>2D Word Path</strong><span>Classic flat grid with sizes, difficulties, Daily, Mystery and Challenge.</span></button>
+        <button class="choice" type="button" data-game-type="3d"><strong>3D Word Cube</strong><span>Rotate a 3×3 cube and trace words across faces and cube edges.</span></button>
+      </div>
+    </div>
+
+    <div class="setting-section" id="gridSetting">
       <h2 class="setting-title">Grid size</h2>
       <div class="choice-grid" id="gridChoices">
         <button class="choice selected" type="button" data-grid="6">
@@ -438,7 +448,7 @@
       </div>
     </div>
 
-    <div class="setting-section">
+    <div class="setting-section" id="difficultySetting">
       <h2 class="setting-title">Difficulty</h2>
       <div class="choice-grid" id="difficultyChoices">
         <button class="choice selected" type="button" data-difficulty="beginner">
@@ -454,7 +464,7 @@
     </div>
 
 
-    <div class="setting-section">
+    <div class="setting-section" id="modeSetting">
       <h2 class="setting-title">Game mode</h2>
       <div class="choice-grid modes" id="gameModeChoices">
         <button class="choice selected" type="button" data-game-mode="classic"><strong>Classic</strong><span>Random theme and puzzle.</span></button>
@@ -472,7 +482,7 @@
     <div class="profile-summary" id="profileSummary"></div>
 
     <button class="start-btn resume-start hidden" id="resumePausedBtn" type="button">Resume paused puzzle</button>
-    <button class="start-btn" id="startBtn" type="button">Start game</button>
+    <button class="start-btn" id="startBtn" type="button">Start 2D game</button>
   </section>
 
   <section id="gameScreen" class="hidden">
@@ -595,6 +605,7 @@
   </div>
 </div>
 
+<script src="themes.js?v=1.0.0"></script>
 <script src="words.js"></script>
 <script>
 (() => {
@@ -605,113 +616,9 @@
   const MIN_BONUS_LENGTH = 3;
   const ENGLISH_WORDS = window.ANITAS_ENGLISH_WORDS instanceof Set ? window.ANITAS_ENGLISH_WORDS : new Set();
 
-  /* Large offline theme pools. The generator selects a unique subset whose
-     total letter count exactly matches the selected grid (36 / 81 / 144). */
-  const THEME_POOLS = [
-    {
-      name:"Animals",
-      words:["CHIMPANZEE","BUTTERFLY","CROCODILE","ALLIGATOR","ELEPHANT","DOLPHIN","PANTHER","RABBIT","MONKEY","TURTLE","PARROT","JAGUAR","HORSE","WHALE","TIGER","ZEBRA","PANDA","OTTER","KOALA","SHEEP","MOOSE","BEAVER","BADGER","FALCON","EAGLE","WOLF","BEAR","LION","SWAN","DUCK","FROG","FOX","EMU","ANT","OWL","APE","CAT","DOG","CAMEL","GORILLA","CHEETAH","LEOPARD","HAMSTER","PENGUIN","BUFFALO","DONKEY","GECKO","IGUANA","MANTIS","COBRA","SLOTH"]
-    },
-    {
-      name:"Ocean",
-      words:["JELLYFISH","SEAHORSE","STARFISH","OCTOPUS","DOLPHIN","TURTLE","MARLIN","SALMON","ANCHOR","LAGOON","CORAL","SHARK","WHALE","MANTA","OCEAN","PEARL","SHELL","COAST","REEF","SQUID","WAVES","TIDES","CRAB","SEAL","KELP","SURF","BOAT","WAVE","TIDE","SEA","FIN","EEL","COD","HARBOR","ISLAND","LOBSTER","SEAGULL","CURRENT","SEABED","PLANKTON","BARNACLE","SEASHELL","ANCHOVY","SARDINE","BUBBLES","SAILBOAT","BEACH","CLIFF","COVE","BAY"]
-    },
-    {
-      name:"Food",
-      words:["STRAWBERRY","CHOCOLATE","PINEAPPLE","BLUEBERRY","SANDWICH","SPAGHETTI","PANCAKE","BANANA","ORANGE","CARROT","CHEESE","TOMATO","COOKIE","YOGURT","MUFFIN","BREAD","GRAPE","HONEY","LEMON","MELON","PEACH","APPLE","MANGO","OLIVE","CREAM","TOAST","SALAD","BERRY","SUGAR","RICE","FIG","PIE","EGG","HAM","POTATO","AVOCADO","BURGER","NOODLES","WAFFLE","BISCUIT","CEREAL","BUTTER","CHERRY","COCONUT","GARLIC","GINGER","PUMPKIN","PEPPER","PASTA","SOUP"]
-    },
-    {
-      name:"Nature",
-      words:["WATERFALL","MOUNTAIN","RAINFOREST","SUNFLOWER","WOODLAND","MEADOW","FOREST","BREEZE","THUNDER","RAINBOW","RIVER","STONE","CLOUD","PLANT","GRASS","MAPLE","CEDAR","CLIFF","FLAME","FIELD","LEAF","PINE","MOSS","TREE","RAIN","SNOW","WIND","ROCK","OAK","SUN","SKY","FOG","MUD","VALLEY","DESERT","CANYON","GLACIER","JUNGLE","POND","STREAM","FLOWER","BLOSSOM","BRANCH","ROOT","VOLCANO","ISLAND","HILL","SHADOW","EARTH","GARDEN"]
-    },
-    {
-      name:"Space",
-      words:["TELESCOPE","ASTEROID","SATELLITE","SPACESHIP","UNIVERSE","GALAXY","NEBULA","METEOR","ROCKET","PLANET","COSMOS","CRATER","ORBIT","SOLAR","SATURN","VENUS","PLUTO","COMET","LUNAR","MOON","MARS","STAR","EARTH","SPACE","SUN","SKY","JUPITER","MERCURY","GRAVITY","ASTRONAUT","MISSION","MODULE","ECLIPSE","ALIEN","ORBITER","COSMIC","PLANETARY","STARDUST","MOONLIGHT","SUPERNOVA","BLACKHOLE","MILKYWAY","LAUNCH","CAPSULE","RADIATION","VACUUM"]
-    },
-    {
-      name:"Fantasy",
-      words:["ENCHANTMENT","ADVENTURER","DRAGON","WIZARD","KNIGHT","CASTLE","POTION","PRINCESS","SORCERER","TREASURE","MAGIC","SHIELD","GOBLIN","MERLIN","SWORD","CROWN","TOWER","GHOST","GIANT","FAIRY","SPELL","QUEST","RUNE","ELF","ORC","IMP","KINGDOM","DUNGEON","PHOENIX","UNICORN","WARLOCK","CRYSTAL","MYSTIC","ELIXIR","THRONE","ARMOR","SCROLL","CHARM","RIDDLE","PORTAL","MONSTER","HERO","VILLAIN","DRUID","TROLL","OGRE","WAND"]
-    },
-    {
-      name:"Technology",
-      words:["SMARTPHONE","COMPUTER","KEYBOARD","INTERNET","SOFTWARE","HARDWARE","DATABASE","BATTERY","SWITCH","SCREEN","SENSOR","CAMERA","TABLET","SERVER","ROBOT","PHONE","LASER","CABLE","MODEM","RADIO","PIXEL","VIDEO","MOTOR","CHIP","CODE","DATA","USB","APP","NETWORK","PROCESSOR","MEMORY","DISPLAY","WIRELESS","BLUETOOTH","SIGNAL","ROUTER","CIRCUIT","DEVICE","DIGITAL","STORAGE","LAPTOP","MONITOR","PRINTER","BROWSER","SYSTEM","UPLOAD","DOWNLOAD","BUTTON","TOUCH","POWER"]
-    },
-    {
-      name:"Sports",
-      words:["BASKETBALL","VOLLEYBALL","SWIMMING","FOOTBALL","BASEBALL","MARATHON","CYCLING","TENNIS","HOCKEY","BOXING","RUNNER","TRAINING","MATCH","COACH","SKATE","RUGBY","SCORE","POWER","SPORT","SWING","FIELD","RACE","CLIMB","JUMP","TEAM","GOAL","BALL","RUN","SKI","GYM","SPRINTER","STADIUM","PLAYER","REFEREE","MEDAL","TROPHY","FITNESS","WORKOUT","SURFING","SKATING","DIVING","ROWING","HIKING","BOWLING","SOCCER","GOLF","KAYAK","PADDLE"]
-    },
-    {
-      name:"Travel",
-      words:["ADVENTURE","AIRPORT","SUITCASE","PASSPORT","JOURNEY","HOLIDAY","HOTEL","TICKET","FLIGHT","TRAIN","TRAVEL","CAMPING","BACKPACK","MAP","ROAD","CITY","BEACH","MUSEUM","BRIDGE","ISLAND","BORDER","VILLAGE","COUNTRY","RESORT","HOSTEL","CABIN","CRUISE","FERRY","TAXI","BUS","CAR","TRIP","TOUR","GUIDE","CAMERA","LUGGAGE","STATION","PLATFORM","DEPARTURE","ARRIVAL","MOUNTAIN","HARBOR","MARKET","SOUVENIR","TRAIL","ROUTE","VACATION"]
-    },
-    {
-      name:"Music",
-      words:["GUITAR","PIANO","DRUMMER","MELODY","RHYTHM","CONCERT","SINGER","CHORUS","MUSIC","VIOLIN","TRUMPET","FLUTE","BANJO","LYRICS","STAGE","SOUND","BEAT","SONG","RADIO","BAND","DANCE","VOICE","RECORD","ALBUM","TUNE","BASS","SOLO","DJ","MIC","ORCHESTRA","KEYBOARD","SPEAKER","HEADPHONES","HARMONY","GROOVE","TEMPO","ARTIST","PLAYLIST","MUSICAL","CELLO","HARP","SAXOPHONE","CLARINET","PERCUSSION","MICROPHONE"]
-    },
-    {
-      name:"Home",
-      words:["KITCHEN","BEDROOM","BATHROOM","WINDOW","DOORWAY","CARPET","CURTAIN","PILLOW","BLANKET","TABLE","CHAIR","SOFA","LAMP","SHELF","MIRROR","DRAWER","CUPBOARD","GARAGE","GARDEN","FENCE","ROOF","WALL","FLOOR","STAIRS","CLOCK","VASE","CANDLE","BASKET","TOWEL","SHOWER","SINK","OVEN","FRIDGE","FREEZER","PAN","POT","PLATE","SPOON","FORK","KNIFE","MUG","GLASS","KEY","LOCK","BED","DESK","ROOM"]
-    },
-    {
-      name:"Transport",
-      words:["AIRPLANE","HELICOPTER","MOTORCYCLE","BICYCLE","SCOOTER","SUBWAY","TRAM","TRAIN","TRUCK","CAR","BUS","TAXI","FERRY","BOAT","SHIP","ROCKET","ENGINE","WHEEL","BRAKE","PEDAL","STEERING","STATION","TUNNEL","BRIDGE","ROAD","TRACK","RAIL","DRIVER","PILOT","CAPTAIN","VEHICLE","TRAFFIC","HIGHWAY","GARAGE","PARKING","FUEL","DIESEL","ELECTRIC","MOTOR","TIRE","SIGNAL","CARGO","SEAT","CABIN"]
-    },
-    {
-      name:"Weather",
-      words:["THUNDERSTORM","LIGHTNING","RAINBOW","SUNSHINE","SNOWFLAKE","BLIZZARD","DRIZZLE","TORNADO","HURRICANE","WEATHER","THUNDER","BREEZE","CLOUDY","STORM","RAIN","SNOW","WIND","SUNNY","FROST","MIST","FOG","ICE","HEAT","COLD","WARM","TEMPERATURE","FORECAST","HUMIDITY","CLIMATE","SHOWER","FREEZING","DROUGHT","MONSOON","CYCLONE","GUST","CLOUD","SKY"]
-    },
-    {
-      name:"School",
-      words:["NOTEBOOK","CLASSROOM","HOMEWORK","TEACHER","STUDENT","PENCIL","ERASER","RULER","LESSON","SCHOOL","BOOK","PAPER","DESK","CHAIR","BOARD","CLASS","TEST","EXAM","GRADE","MATH","SCIENCE","HISTORY","MUSIC","SPORT","LANGUAGE","LIBRARY","BACKPACK","LUNCH","BREAK","FRIEND","QUESTION","ANSWER","PROJECT","COMPUTER","CALCULATOR","DICTIONARY","READING","WRITING","SPELLING","DRAWING","LEARNING"]
-    },
-    {
-      name:"Jobs",
-      words:["ENGINEER","TEACHER","DOCTOR","NURSE","PILOT","CHEF","BAKER","FARMER","DRIVER","ARTIST","DESIGNER","MECHANIC","BUILDER","SCIENTIST","PROGRAMMER","DENTIST","LAWYER","WRITER","ACTOR","SINGER","DANCER","PLUMBER","ELECTRICIAN","CARPENTER","TAILOR","BARBER","CASHIER","MANAGER","POLICE","FIREFIGHTER","REPORTER","PHOTOGRAPHER","ARCHITECT","GARDENER","COACH","VET"]
-    },
-    {
-      name:"City",
-      words:["SKYSCRAPER","APARTMENT","BUILDING","STREET","AVENUE","TRAFFIC","CROSSING","STATION","MARKET","MUSEUM","THEATER","HOTEL","RESTAURANT","CAFE","PARK","BRIDGE","TUNNEL","SQUARE","FOUNTAIN","LIBRARY","HOSPITAL","SCHOOL","OFFICE","SHOP","STORE","BANK","PLAZA","SIDEWALK","BUS","TAXI","TRAIN","METRO","LIGHTS","TOWER","CHURCH","CASTLE","HARBOR","RIVER","ROAD","CITY"]
-    },
-    {
-      name:"Tricking",
-      words:["TRICKING","BACKFLIP","FRONTFLIP","SIDEFLIP","CARTWHEEL","AERIAL","WEBSTER","GAINER","CORK","TWIST","KICK","HOOKKICK","ROUNDHOUSE","TORNADO","BUTTERFLY","SWIPE","RAIZ","SCOOT","CHEAT","COMBO","LANDING","TAKEOFF","ROTATION","SPIN","FLIP","KICKS","SETUP","FLOW","POWER","HEIGHT","BALANCE","CONTROL","MOMENTUM","AXIS","TUCK","LAYOUT","STANCE","TRANSITION","POP","SWING","HYPER","FULLTWIST","BACKSIDE","FRONTSIDE","TECHNIQUE","PRECISION","SPEED","STYLE","TRAINING","FLEXIBILITY"]
-    },
-    {
-      name:"Bouldering",
-      words:["BOULDERING","CRIMP","SLOPER","PINCH","JUG","POCKET","UNDERCLING","SIDEPULL","HEELHOOK","TOEHOOK","MANTLE","DYNO","CAMPUS","CHALK","HOLDS","PROBLEM","SEND","FLASH","TOP","MATCH","FLAG","DROPKNEE","SMEAR","VOLUME","WALL","OVERHANG","SLAB","ARETE","CRUX","BETA","BRUSH","MAT","SPOTTER","ROUTE","STATIC","DYNAMIC","LOCKOFF","DEADPOINT","COMPRESSION","HANGBOARD","POWER","TENSION","COORDINATION","COMPETITION","START","FINISH","SEQUENCE","FOOTWORK","FINGERS","GRIP"]
-    },
-    {
-      name:"Climbing",
-      words:["CLIMBING","BELAY","HARNESS","CARABINER","QUICKDRAW","ROPE","ANCHOR","LEAD","TOPROPE","CRAG","ROUTE","PITCH","BOLT","CLIP","CHALK","HELMET","SLING","CAM","NUT","PROTECTION","RAPPEL","ABSEIL","ASCENDER","DESCENDER","FOOTWORK","GRIP","EDGE","JAM","CRACK","FACE","CHIMNEY","ARETE","OVERHANG","SLAB","SUMMIT","APPROACH","PARTNER","BELAYER","CLIMBER","EXPOSURE","FALL","SEND","REDPOINT","ONSIGHT","FLASH","PROJECT","CRUX","BETA","REST","LOWER"]
-    }
-  ];
-
-
-  const EXTRA_THEME_WORDS = {
-    Animals:["RHINOCEROS","ORANGUTAN","HIPPOPOTAMUS"],
-    Ocean:["HAMMERHEAD","BIOLUMINESCENCE","UNDERWATER"],
-    Food:["CAULIFLOWER","POMEGRANATE","PASSIONFRUIT"],
-    Nature:["THUNDERCLOUD","BIODIVERSITY","WILDFLOWERS"],
-    Space:["CONSTELLATION","INTERSTELLAR","GRAVITATION"],
-    Fantasy:["NECROMANCER","SHAPESHIFTER","DRAGONRIDER"],
-    Technology:["MICROPROCESSOR","CYBERSECURITY","SEMICONDUCTOR"],
-    Sports:["WEIGHTLIFTING","GYMNASTICS","SKATEBOARDING"],
-    Travel:["DESTINATION","SIGHTSEEING","EXPLORATION"],
-    Music:["SYNTHESIZER","SONGWRITING","CONDUCTOR"],
-    Home:["DISHWASHER","BOOKSHELF","WARDROBE"],
-    Transport:["LOCOMOTIVE","SPEEDBOAT","AMBULANCE"],
-    Weather:["THUNDERCLOUD","PRECIPITATION","ATMOSPHERE"],
-    School:["MATHEMATICS","GEOGRAPHY","LABORATORY"],
-    Jobs:["VETERINARIAN","PALEONTOLOGIST","ARCHITECTURE"],
-    City:["NEIGHBORHOOD","INTERSECTION","UNDERGROUND"],
-    Tricking:["DOUBLEBACKFLIP","CORKSCREW","COMBINATION"],
-    Bouldering:["BODYTENSION","HEELTOEHOOK","ROUTEREADING"],
-    Climbing:["COUNTERPRESSURE","MULTIPITCH","GEARPLACEMENT"]
-  };
-  THEME_POOLS.forEach(theme=>{
-    const extras=EXTRA_THEME_WORDS[theme.name]||[];
-    theme.words=[...new Set([...theme.words,...extras])];
-  });
+  /* Canonical themes are shared with the 3D cube. */
+  const THEME_POOLS = (window.ANITAS_THEME_POOLS||[]).map(theme=>({name:theme.name,words:[...theme.words]}));
+  if(!THEME_POOLS.length)throw new Error("Shared theme library failed to load.");
 
   const BONUS_WORDS = new Set(`
     ACE ACT ADD AGE AIR ALL AND ANT ANY APE ARC ARM ART ASH ASK BAD BAG BAR BAT BAY BED BEE BET BIG BIN BIT BOX BOY BUS
@@ -754,6 +661,10 @@
   const gamePlayerName = document.getElementById("gamePlayerName");
   const switchProfileStartBtn = document.getElementById("switchProfileStartBtn");
   const switchProfileGameBtn = document.getElementById("switchProfileGameBtn");
+  const gameTypeChoices = document.getElementById("gameTypeChoices");
+  const gridSetting = document.getElementById("gridSetting");
+  const difficultySetting = document.getElementById("difficultySetting");
+  const modeSetting = document.getElementById("modeSetting");
   const gridChoices = document.getElementById("gridChoices");
   const difficultyChoices = document.getElementById("difficultyChoices");
   const startBtn = document.getElementById("startBtn");
@@ -814,6 +725,7 @@
   const endGameConfirmBtn = document.getElementById("endGameConfirmBtn");
   const resumePausedBtn = document.getElementById("resumePausedBtn");
 
+  let pendingGameType = localStorage.getItem("anitasWordPathPreferredGameType")==="3d"?"3d":"2d";
   let pendingGrid = 6;
   let pendingDifficulty = "beginner";
   let pendingGameMode = "classic";
@@ -876,7 +788,7 @@
   const DEFAULT_STATS = {
     totalPuzzles:0,totalWords:0,totalBonus:0,bestCombo:0,bestScore:0,longestWord:"",
     dailyStreak:0,lastDailyDate:"",recentWords:[],themeProgress:{},dailyBest:{},soundEnabled:true,
-    completedPuzzles:[],completedFingerprints:[]
+    completedPuzzles:[],completedFingerprints:[],cubePuzzles:0,cubeWords:0,cubeBonus:0,cubeBestScore:0
   };
 
   function profileStorageKey(name=activeProfileName){
@@ -978,7 +890,7 @@
   function updatePausedResumeButton(){
     if(!resumePausedBtn)return;
     const snapshot=getPausedSnapshot();
-    resumePausedBtn.classList.toggle("hidden",!snapshot);
+    resumePausedBtn.classList.toggle("hidden",pendingGameType==="3d"||!snapshot);
     if(snapshot){
       const progress=(snapshot.foundTargets||[]).length;
       const total=(snapshot.targets||[]).length;
@@ -1037,7 +949,7 @@
   function unlockedThemeCount(){return THEME_POOLS.filter(t=>isThemeUnlocked(t.name)).length}
 
   function renderProfileSummary(){
-    profileSummary.textContent=`${activeProfileName||"Player"} · ${playerStats.totalPuzzles} puzzles completed · ${playerStats.totalWords} theme words · ${playerStats.totalBonus} bonus words · best combo ${playerStats.bestCombo} · daily streak ${playerStats.dailyStreak} · themes ${unlockedThemeCount()}/${THEME_POOLS.length} unlocked`;
+    profileSummary.textContent=`${activeProfileName||"Player"} · ${playerStats.totalPuzzles} puzzles completed · ${(playerStats.cubePuzzles||0)} 3D cubes · ${playerStats.totalWords} theme words · ${playerStats.totalBonus} bonus words · best combo ${playerStats.bestCombo} · daily streak ${playerStats.dailyStreak} · themes ${unlockedThemeCount()}/${THEME_POOLS.length} unlocked`;
   }
 
   function feedback(type){
@@ -1096,6 +1008,24 @@
       btn.classList.toggle("selected",btn.dataset[attr]===String(value));
     });
   }
+
+  function updateGameTypeUI(){
+    const cube=pendingGameType==="3d";
+    gridSetting.classList.toggle("hidden",cube);
+    difficultySetting.classList.toggle("hidden",cube);
+    modeSetting.classList.toggle("hidden",cube);
+    startBtn.textContent=cube?"Start 3D cube":"Start 2D game";
+    setSelectedChoice(gameTypeChoices,"gameType",pendingGameType);
+    updatePausedResumeButton();
+  }
+
+  gameTypeChoices.addEventListener("click",e=>{
+    const btn=e.target.closest("[data-game-type]");
+    if(!btn)return;
+    pendingGameType=btn.dataset.gameType;
+    try{localStorage.setItem("anitasWordPathPreferredGameType",pendingGameType)}catch(_){}
+    updateGameTypeUI();
+  });
 
   gridChoices.addEventListener("click",e=>{
     const btn=e.target.closest("[data-grid]");
@@ -2215,6 +2145,10 @@
   }
 
   async function startGame(){
+    if(pendingGameType==="3d"){
+      window.location.href="cube/";
+      return;
+    }
     clearPausedSnapshot();
     parseSeedCode(seedInput.value);
     SIZE=pendingGrid;
@@ -2287,6 +2221,7 @@
     localStorage.removeItem("anitasWordPathActiveProfile");
     sessionStorage.removeItem("anitasWordPathActiveProfile");
   }
+  updateGameTypeUI();
   updateSoundButton();
 })();
 </script>
