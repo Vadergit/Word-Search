@@ -1,1 +1,51 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Word Shape Prototypes · v0.2.0</title><link rel="stylesheet" href="prototype.css?v=0.2.0"><style>.hub-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:24px}.hub-card{background:#fff;border:1px solid var(--line);border-radius:24px;padding:20px;box-shadow:0 16px 44px rgba(24,50,41,.08)}.hub-card h2{margin:8px 0}.hub-card p{color:var(--muted);line-height:1.55}.webgl{display:inline-block;padding:7px 10px;border-radius:999px;background:#e1f6ef;color:#397466;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.08em}@media(max-width:900px){.hub-grid{grid-template-columns:1fr}}</style></head><body><main class="shell"><header class="topbar"><div><div class="eyebrow">Prototype playground <span class="version">v0.2.0</span></div><h1>Word Shape Prototypes</h1><p class="lead">Three isolated experiments using actual WebGL 3D geometry. These prototypes are separate from the production Word Cube and are intended for interaction and shape testing.</p></div><div class="actions"><a class="btn" href="../">Back to game</a><a class="btn" href="../cube/">Word Cube</a></div></header><section class="hub-grid"><article class="hub-card"><span class="webgl">Real WebGL 3D</span><h2>Word Pyramid</h2><p>A true tetrahedron with four shaded triangular faces and 40 physical letter tiles mounted on the surfaces.</p><a class="btn primary" href="pyramid.html">Play Pyramid</a></article><article class="hub-card"><span class="webgl">Real WebGL 3D</span><h2>Word Orb</h2><p>A true shaded sphere with 48 physical letter tiles distributed across its surface and wrap-around routes.</p><a class="btn primary" href="orb.html">Play Orb</a></article><article class="hub-card"><span class="webgl">Real WebGL 3D</span><h2>Word Mug</h2><p>A true 3D mug built from cylindrical geometry with rim, base and handle, plus a curved 6 × 6 front grid.</p><a class="btn primary" href="mug.html">Play Mug</a></article></section><div class="proto" style="margin-top:18px"><strong>Prototype v0.2.0.</strong> The three forms now use real Three.js/WebGL meshes rather than projected 2D points.</div></main></body></html>
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#f3f7f4" />
+  <title>Word Shape Prototypes · v0.3.0</title>
+  <link rel="stylesheet" href="prototype.css?v=0.3.0" />
+  <style>
+    .prototype-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:18px}
+    .prototype-card{background:rgba(255,255,255,.82);border:1px solid var(--line);border-radius:24px;padding:18px;box-shadow:var(--shadow)}
+    .prototype-card h2{margin:12px 0 7px;font-size:25px;letter-spacing:-.04em}.prototype-card p{color:var(--muted);font-size:12px;line-height:1.55;min-height:58px}
+    .preview{height:250px;border-radius:18px;border:1px solid rgba(31,72,58,.08);background:linear-gradient(rgba(31,72,58,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(31,72,58,.045) 1px,transparent 1px),radial-gradient(circle at center,rgba(69,205,176,.10),transparent 55%);background-size:28px 28px,28px 28px,auto;display:grid;place-items:center;overflow:hidden}
+    .preview-label{font-family:Georgia,serif;font-size:58px;font-weight:800;color:#27443a;text-shadow:0 14px 30px rgba(30,70,55,.16)}.card-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+    @media(max-width:900px){.prototype-grid{grid-template-columns:1fr}.prototype-card p{min-height:0}}
+  </style>
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">3D prototype playground <span class="version-badge">v0.3.0</span></div>
+        <h1>Word Shape Prototypes</h1>
+        <p>These prototypes now deliberately use the same light appearance, tile styling, rotation behaviour, 8-second path timer and mint/green letter trails as the original Word Cube.</p>
+      </div>
+      <div class="top-actions"><a class="ghost-btn" href="../">Game menu</a><a class="primary-btn small" href="../cube/">Open Word Cube</a></div>
+    </header>
+    <section class="prototype-grid">
+      <article class="prototype-card">
+        <div class="preview"><div class="preview-label">△</div></div>
+        <span class="shape-badge">4 faces · 40 tiles</span><h2>Word Pyramid</h2>
+        <p>Real shaded triangular faces with tiles mounted on the surface and trails that can continue over pyramid edges.</p>
+        <div class="card-actions"><a class="primary-btn" href="pyramid.html">Play prototype</a></div>
+      </article>
+      <article class="prototype-card">
+        <div class="preview"><div class="preview-label">◉</div></div>
+        <span class="shape-badge">6 × 8 · 48 tiles</span><h2>Word Orb</h2>
+        <p>A solid spherical surface with latitude/longitude guides, tangent tiles, curved trails and wrap-around routes.</p>
+        <div class="card-actions"><a class="primary-btn" href="orb.html">Play prototype</a></div>
+      </article>
+      <article class="prototype-card">
+        <div class="preview"><div class="preview-label">☕</div></div>
+        <span class="shape-badge">6 × 6 · front only</span><h2>Word Mug</h2>
+        <p>A complete cup body with rim and handle. The playable 6×6 grid follows only the curved front surface.</p>
+        <div class="card-actions"><a class="primary-btn" href="mug.html">Play prototype</a></div>
+      </article>
+    </section>
+    <div class="prototype-note"><strong>v0.3.0 focus:</strong> approve the 3D shapes and interaction first. The final unique-path/theme generator will only be merged after the shapes feel right.</div>
+  </main>
+</body>
+</html>
