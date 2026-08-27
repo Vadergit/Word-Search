@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Anitas Word Path · Statistics</title>
+  <style>
+    :root{
+      --bg:#f4f6f2;--panel:#fff;--text:#172019;--muted:#718078;--accent:#59c9c4;--accent2:#8dcd56;
+      --line:#dfe7df;--shadow:0 16px 50px rgba(25,45,30,.10);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--text);background:radial-gradient(circle at 15% 0%,rgba(89,201,196,.14),transparent 32rem),radial-gradient(circle at 100% 100%,rgba(141,205,86,.14),transparent 35rem),var(--bg)}
+    button,a{font:inherit}
+    .app{width:min(920px,100%);margin:0 auto;padding:22px}
+    .hidden{display:none!important}
+    .card{background:rgba(255,255,255,.94);border:1px solid rgba(255,255,255,.98);box-shadow:var(--shadow);border-radius:28px;padding:clamp(20px,4vw,30px)}
+    .kicker{color:var(--muted);text-transform:uppercase;letter-spacing:.14em;font-weight:850;font-size:11px;margin-bottom:6px}
+    h1{margin:0;font-size:clamp(34px,6vw,54px);letter-spacing:-.05em;line-height:.98}
+    h2{margin:0;font-size:20px;letter-spacing:-.025em}
+    p{color:var(--muted);font-size:13px;line-height:1.55}
+    .profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:22px 0 14px}
+    .profile-card{border:1px solid var(--line);background:#fafcfa;border-radius:18px;padding:18px 14px;cursor:pointer;text-align:center;transition:.14s ease}
+    .profile-card:hover{border-color:#bfd5c4;transform:translateY(-1px)}
+    .profile-card.selected{border-color:var(--accent);box-shadow:inset 0 0 0 2px rgba(89,201,196,.18);background:rgba(89,201,196,.07)}
+    .avatar{width:50px;height:50px;border-radius:50%;display:grid;place-items:center;margin:0 auto 9px;background:#18251c;color:#fff;font-weight:900;font-size:18px}
+    .profile-card strong{display:block;font-size:18px}.profile-card span{display:block;color:var(--muted);font-size:11px;margin-top:4px}
+    .pin-row{display:grid;grid-template-columns:1fr auto;gap:9px;margin-top:14px}
+    .pin{width:100%;border:1px solid var(--line);border-radius:14px;padding:13px 14px;background:#fafcfa;text-align:center;font-size:20px;letter-spacing:.28em;font-weight:800}
+    .btn{border:none;border-radius:14px;padding:11px 14px;font-weight:850;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+    .btn.primary{background:#1c2a20;color:#fff}.btn.secondary{background:#edf2ed;color:#223027}
+    .error{min-height:18px;color:#a3473c;font-size:12px;margin-top:8px}
+    .top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:18px}.top-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+    .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:16px}
+    .summary-card{border:1px solid var(--line);background:#f8faf7;border-radius:16px;padding:14px}
+    .summary-card span{display:block;color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.1em;font-weight:900;margin-bottom:5px}
+    .summary-card b{display:block;font-size:27px;letter-spacing:-.04em}.summary-card small{display:block;color:var(--muted);font-size:10px;margin-top:3px}
+    .section{border:1px solid var(--line);border-radius:18px;padding:15px;margin-top:11px;background:#fff}
+    .section-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:12px}.section-head span{font-size:10px;color:var(--muted)}
+    .week-bars{height:170px;display:grid;grid-template-columns:repeat(7,1fr);gap:8px;align-items:end}
+    .day{height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;min-width:0}.value{font-size:11px;font-weight:900;margin-bottom:5px}.track{height:112px;width:100%;max-width:46px;border-radius:10px;background:#edf2ed;display:flex;align-items:flex-end;overflow:hidden}.fill{width:100%;border-radius:10px;background:linear-gradient(180deg,var(--accent),var(--accent2));transition:height .25s ease}.label{font-size:10px;color:var(--muted);font-weight:800;margin-top:6px}
+    .history{height:135px;display:grid;grid-template-columns:repeat(8,1fr);gap:8px;align-items:end}.history-item{height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;min-width:0}.history-track{height:84px;width:100%;max-width:48px;border-radius:9px;background:#edf2ed;display:flex;align-items:flex-end;overflow:hidden}.history-fill{width:100%;background:#8dcd56;border-radius:9px}.history-label{font-size:9px;color:var(--muted);margin-top:5px;white-space:nowrap}.history-value{font-size:10px;font-weight:900;margin-bottom:4px}
+    .days{display:grid;gap:6px}.day-row{display:grid;grid-template-columns:minmax(120px,1.4fr) minmax(70px,.7fr);gap:8px;align-items:center;padding:9px 11px;border-radius:11px;background:#f8faf7;font-size:11px}.day-row .date{font-weight:850}.day-row .count{text-align:right;color:var(--muted)}
+    .note{margin-top:12px;color:var(--muted);font-size:10px;line-height:1.5}
+    .empty{padding:30px 10px;text-align:center;color:var(--muted);font-size:13px}
+    @media(max-width:700px){.summary{grid-template-columns:1fr 1fr}.profile-grid{grid-template-columns:1fr}.pin-row{grid-template-columns:1fr}.top{flex-direction:column}.top-actions{justify-content:flex-start}.week-bars{gap:4px}.app{padding:12px}}
+  </style>
+</head>
+<body>
+<main class="app">
+  <section class="card" id="loginCard">
+    <div class="kicker">Local statistics</div>
+    <h1>Anitas Word Path</h1>
+    <p>Choose a local profile and enter the PIN. No data is uploaded; this page reads only the progress stored in this browser.</p>
+    <div class="profile-grid" id="profileGrid">
+      <button class="profile-card" type="button" data-profile="Anita"><div class="avatar">A</div><strong>Anita</strong><span>View local statistics</span></button>
+      <button class="profile-card" type="button" data-profile="Dario"><div class="avatar">D</div><strong>Dario</strong><span>View local statistics</span></button>
+    </div>
+    <div class="pin-row">
+      <input class="pin" id="pinInput" type="password" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="PIN" disabled />
+      <button class="btn primary" id="loginBtn" type="button" disabled>Open statistics</button>
+    </div>
+    <div class="error" id="error"></div>
+    <p style="font-size:11px;margin-bottom:0">The PIN is only a local profile lock, not an online account.</p>
+  </section>
+
+  <section class="card hidden" id="dashboard">
+    <div class="top">
+      <div><div class="kicker">Local activity</div><h2 id="title">Statistics</h2><p id="subtitle" style="margin:5px 0 0"></p></div>
+      <div class="top-actions"><a class="btn secondary" href="./">Back to game</a><button class="btn secondary" id="switchBtn" type="button">Switch player</button></div>
+    </div>
+
+    <div class="summary">
+      <div class="summary-card"><span>Today</span><b id="todayCount">0</b><small>puzzles</small></div>
+      <div class="summary-card"><span>This week</span><b id="weekCount">0</b><small>Monday – Sunday</small></div>
+      <div class="summary-card"><span>Average / day</span><b id="dayAverage">0.0</b><small>calendar average</small></div>
+      <div class="summary-card"><span>Best day</span><b id="bestCount">0</b><small id="bestDate">—</small></div>
+    </div>
+
+    <div class="section">
+      <div class="section-head"><h2>This week</h2><span id="weekMeta"></span></div>
+      <div class="week-bars" id="weekBars"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-head"><h2>Last 8 weeks</h2><span id="weeksMeta"></span></div>
+      <div class="history" id="history"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-head"><h2>Last 14 days</h2><span>Puzzles per day</span></div>
+      <div class="days" id="days"></div>
+    </div>
+
+    <div class="note" id="note"></div>
+  </section>
+</main>
+
+<script>
+(() => {
+  const PROFILES={
+    Anita:{pinHash:"9af15b336e6a9619928537df30b2e6a2376569fcf9d7e773eccede65606529a0"},
+    Dario:{pinHash:"9af15b336e6a9619928537df30b2e6a2376569fcf9d7e773eccede65606529a0"}
+  };
+
+  const loginCard=document.getElementById("loginCard");
+  const dashboard=document.getElementById("dashboard");
+  const profileGrid=document.getElementById("profileGrid");
+  const pinInput=document.getElementById("pinInput");
+  const loginBtn=document.getElementById("loginBtn");
+  const errorEl=document.getElementById("error");
+  const title=document.getElementById("title");
+  const subtitle=document.getElementById("subtitle");
+  const todayCount=document.getElementById("todayCount");
+  const weekCount=document.getElementById("weekCount");
+  const dayAverage=document.getElementById("dayAverage");
+  const bestCount=document.getElementById("bestCount");
+  const bestDate=document.getElementById("bestDate");
+  const weekMeta=document.getElementById("weekMeta");
+  const weeksMeta=document.getElementById("weeksMeta");
+  const weekBars=document.getElementById("weekBars");
+  const history=document.getElementById("history");
+  const days=document.getElementById("days");
+  const note=document.getElementById("note");
+  const switchBtn=document.getElementById("switchBtn");
+
+  let pendingProfile="";
+
+  async function sha256(value){
+    const data=new TextEncoder().encode(value);
+    const digest=await crypto.subtle.digest("SHA-256",data);
+    return [...new Uint8Array(digest)].map(b=>b.toString(16).padStart(2,"0")).join("");
+  }
+
+  function selectProfile(name){
+    pendingProfile=name;
+    profileGrid.querySelectorAll(".profile-card").forEach(card=>card.classList.toggle("selected",card.dataset.profile===name));
+    pinInput.disabled=false;loginBtn.disabled=false;pinInput.value="";errorEl.textContent="";pinInput.focus();
+  }
+
+  function dateKey(date){
+    const y=date.getFullYear(),m=String(date.getMonth()+1).padStart(2,"0"),d=String(date.getDate()).padStart(2,"0");
+    return `${y}-${m}-${d}`;
+  }
+
+  function dateFromKey(key){const [y,m,d]=key.split("-").map(Number);return new Date(y,m-1,d,12)}
+  function addDays(date,n){const out=new Date(date.getFullYear(),date.getMonth(),date.getDate(),12);out.setDate(out.getDate()+n);return out}
+  function mondayOf(date){const out=new Date(date.getFullYear(),date.getMonth(),date.getDate(),12);out.setDate(out.getDate()-((out.getDay()+6)%7));return out}
+  function fmt(date,options={day:"2-digit",month:"short"}){return date.toLocaleDateString("en-GB",options)}
+
+  function parsePuzzleDate(code){
+    let m=String(code).match(/^DAILY-(\d{4}-\d{2}-\d{2})-/i);
+    if(m)return dateFromKey(m[1]);
+    m=String(code).match(/^WP-(?:CLASSIC|MIXED|MYSTERY|CHALLENGE)-(?:6|9|12)-(?:BEGINNER|MIDDLE|HARD)-([0-9A-Z]+)-/i);
+    if(!m)return null;
+    const ms=parseInt(m[1],36);
+    if(!Number.isFinite(ms)||ms<1577836800000||ms>Date.now()+86400000)return null;
+    return new Date(ms);
+  }
+
+  function loadProfile(name){
+    try{return JSON.parse(localStorage.getItem(`anitasWordPathStats:${name}`)||"null")||{}}
+    catch(_){return{}}
+  }
+
+  function buildActivity(stats){
+    const map={};
+    const codes=[...new Set(stats.completedPuzzles||[])];
+    codes.forEach(code=>{
+      const date=parsePuzzleDate(code);if(!date)return;
+      const key=dateKey(date);map[key]=(map[key]||0)+1;
+    });
+    return{map,datedCount:Object.values(map).reduce((a,b)=>a+b,0),codeCount:codes.length};
+  }
+
+  function render(name){
+    const stats=loadProfile(name);
+    const {map,datedCount}=buildActivity(stats);
+    const now=new Date();
+    const todayKey=dateKey(now);
+    const weekStart=mondayOf(now);
+    const elapsed=((now.getDay()+6)%7)+1;
+    const getCount=date=>map[dateKey(date)]||0;
+    const thisWeek=Array.from({length:7},(_,i)=>({date:addDays(weekStart,i),count:getCount(addDays(weekStart,i))}));
+    const thisWeekTotal=thisWeek.reduce((s,x)=>s+x.count,0);
+
+    const datedEntries=Object.entries(map).sort((a,b)=>a[0].localeCompare(b[0]));
+    const earliest=datedEntries.length?dateFromKey(datedEntries[0][0]):now;
+    const calendarDays=Math.max(1,Math.floor((new Date(now.getFullYear(),now.getMonth(),now.getDate())-new Date(earliest.getFullYear(),earliest.getMonth(),earliest.getDate()))/86400000)+1);
+
+    let bestKey="",best=0;
+    datedEntries.forEach(([key,count])=>{if(count>best){best=count;bestKey=key}});
+
+    title.textContent=`${name} · Statistics`;
+    subtitle.textContent=`${stats.totalPuzzles||0} puzzles completed in this local profile`;
+    todayCount.textContent=map[todayKey]||0;
+    weekCount.textContent=thisWeekTotal;
+    dayAverage.textContent=(datedCount/calendarDays).toFixed(1);
+    bestCount.textContent=best;
+    bestDate.textContent=bestKey?fmt(dateFromKey(bestKey),{weekday:"short",day:"2-digit",month:"short"}):"—";
+    weekMeta.textContent=`${(thisWeekTotal/elapsed).toFixed(1)} puzzles/day so far`;
+
+    const weekMax=Math.max(1,...thisWeek.map(x=>x.count));
+    weekBars.innerHTML=thisWeek.map(({date,count})=>`<div class="day"><div class="value">${count}</div><div class="track"><div class="fill" style="height:${count?Math.max(8,count/weekMax*100):0}%"></div></div><div class="label">${fmt(date,{weekday:"short"})}</div></div>`).join("");
+
+    const weeks=[];
+    for(let offset=7;offset>=0;offset--){
+      const start=addDays(weekStart,-offset*7);let total=0;
+      for(let i=0;i<7;i++)total+=getCount(addDays(start,i));
+      weeks.push({start,total,current:offset===0});
+    }
+    const maxWeek=Math.max(1,...weeks.map(w=>w.total));
+    const averageWeek=weeks.reduce((s,w)=>s+w.total,0)/weeks.length;
+    weeksMeta.textContent=`Ø ${averageWeek.toFixed(1)} puzzles/week`;
+    history.innerHTML=weeks.map(w=>`<div class="history-item"><div class="history-value">${w.total}</div><div class="history-track"><div class="history-fill" style="height:${w.total?Math.max(8,w.total/maxWeek*100):0}%"></div></div><div class="history-label">${w.current?"This":fmt(w.start,{day:"2-digit",month:"short"})}</div></div>`).join("");
+
+    days.innerHTML=Array.from({length:14},(_,i)=>addDays(now,-i)).map(date=>`<div class="day-row"><span class="date">${fmt(date,{weekday:"short",day:"2-digit",month:"short"})}</span><span class="count">${getCount(date)} puzzles</span></div>`).join("");
+
+    const activeDays=datedEntries.filter(([,count])=>count>0).length;
+    const activeAvg=activeDays?datedCount/activeDays:0;
+    const undated=Math.max(0,(stats.totalPuzzles||0)-datedCount);
+    note.textContent=`${datedCount} completed puzzles have a usable local date and are included in the charts. ${undated} older, repeated Daily, or custom-seed puzzles cannot be assigned reliably to a date. Average on active days: ${activeAvg.toFixed(1)} puzzles.`;
+
+    loginCard.classList.add("hidden");dashboard.classList.remove("hidden");
+  }
+
+  async function login(){
+    const profile=PROFILES[pendingProfile];if(!profile)return;
+    const pin=pinInput.value.trim();if(pin.length!==4){errorEl.textContent="Enter the 4-digit PIN.";return}
+    try{
+      if(await sha256(pin)!==profile.pinHash){errorEl.textContent="Wrong PIN.";pinInput.select();return}
+    }catch(_){errorEl.textContent="PIN check is not supported in this browser.";return}
+    render(pendingProfile);
+  }
+
+  function reset(){
+    pendingProfile="";pinInput.value="";pinInput.disabled=true;loginBtn.disabled=true;errorEl.textContent="";
+    profileGrid.querySelectorAll(".profile-card").forEach(card=>card.classList.remove("selected"));
+    dashboard.classList.add("hidden");loginCard.classList.remove("hidden");
+  }
+
+  profileGrid.addEventListener("click",e=>{const card=e.target.closest("[data-profile]");if(card)selectProfile(card.dataset.profile)});
+  loginBtn.addEventListener("click",login);
+  pinInput.addEventListener("keydown",e=>{if(e.key==="Enter")login()});
+  switchBtn.addEventListener("click",reset);
+})();
+</script>
+</body>
+</html>
