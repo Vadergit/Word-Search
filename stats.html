@@ -230,11 +230,12 @@
     try{
       if(await sha256(pin)!==profile.pinHash){errorEl.textContent="Wrong PIN.";pinInput.select();return}
     }catch(_){errorEl.textContent="PIN check is not supported in this browser.";return}
-    sessionStorage.setItem("anitasWordPathActiveProfile",pendingProfile);
+    localStorage.setItem("anitasWordPathActiveProfile",pendingProfile);
     render(pendingProfile);
   }
 
   function reset(){
+    localStorage.removeItem("anitasWordPathActiveProfile");
     sessionStorage.removeItem("anitasWordPathActiveProfile");
     pendingProfile="";pinInput.value="";pinInput.disabled=true;loginBtn.disabled=true;errorEl.textContent="";
     profileGrid.querySelectorAll(".profile-card").forEach(card=>card.classList.remove("selected"));
@@ -246,12 +247,18 @@
   pinInput.addEventListener("keydown",e=>{if(e.key==="Enter")login()});
   switchBtn.addEventListener("click",reset);
 
-  /* If the game already authenticated a local profile in this tab, open its
-     statistics immediately without asking for the PIN a second time. */
-  const resumedProfile=sessionStorage.getItem("anitasWordPathActiveProfile");
+  /* Reuse the remembered local profile from the game, including after the
+     browser has been closed and reopened. Switch player clears this device login. */
+  const legacySessionProfile=sessionStorage.getItem("anitasWordPathActiveProfile");
+  const resumedProfile=localStorage.getItem("anitasWordPathActiveProfile")||legacySessionProfile;
   if(resumedProfile&&PROFILES[resumedProfile]){
+    localStorage.setItem("anitasWordPathActiveProfile",resumedProfile);
+    sessionStorage.removeItem("anitasWordPathActiveProfile");
     pendingProfile=resumedProfile;
     render(resumedProfile);
+  }else if(resumedProfile){
+    localStorage.removeItem("anitasWordPathActiveProfile");
+    sessionStorage.removeItem("anitasWordPathActiveProfile");
   }
 })();
 </script>

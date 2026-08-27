@@ -929,7 +929,7 @@
       return;
     }
     activeProfileName=pendingProfileName;
-    sessionStorage.setItem("anitasWordPathActiveProfile",activeProfileName);
+    localStorage.setItem("anitasWordPathActiveProfile",activeProfileName);
     playerStats=loadStats(activeProfileName);
     startPlayerName.textContent=activeProfileName;
     gamePlayerName.textContent=activeProfileName;
@@ -950,6 +950,7 @@
     loginScreen.classList.remove("hidden");
     activeProfileName="";
     pendingProfileName="";
+    localStorage.removeItem("anitasWordPathActiveProfile");
     sessionStorage.removeItem("anitasWordPathActiveProfile");
     playerStats=loadStats();
     profileGrid.querySelectorAll(".profile-card").forEach(card=>card.classList.remove("selected"));
@@ -2262,10 +2263,14 @@
   document.getElementById("changeModeBtn").addEventListener("click",changeMode);
   window.addEventListener("resize",drawPaths);
 
-  /* Resume the local profile for this browser tab. This keeps the user signed
-     in when moving between the game and the statistics page. */
-  const resumedProfile=sessionStorage.getItem("anitasWordPathActiveProfile");
+  /* Automatically restore the last authenticated local profile on this device.
+     The remembered value contains only the profile name; all progress and the local
+     profile lock stay in this browser. Switch player clears the remembered profile. */
+  const legacySessionProfile=sessionStorage.getItem("anitasWordPathActiveProfile");
+  const resumedProfile=localStorage.getItem("anitasWordPathActiveProfile")||legacySessionProfile;
   if(resumedProfile&&LOCAL_PROFILES[resumedProfile]){
+    localStorage.setItem("anitasWordPathActiveProfile",resumedProfile);
+    sessionStorage.removeItem("anitasWordPathActiveProfile");
     activeProfileName=resumedProfile;
     pendingProfileName=resumedProfile;
     playerStats=loadStats(activeProfileName);
@@ -2276,6 +2281,9 @@
     loginScreen.classList.add("hidden");
     gameScreen.classList.add("hidden");
     startScreen.classList.remove("hidden");
+  }else if(resumedProfile){
+    localStorage.removeItem("anitasWordPathActiveProfile");
+    sessionStorage.removeItem("anitasWordPathActiveProfile");
   }
   updateSoundButton();
 })();
