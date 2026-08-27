@@ -18,7 +18,9 @@ jobs:
           ref: main
 
       - name: Apply timer pause fix
-        run: python3 patch_cube_timer_v111.py
+        run: |
+          python3 patch_cube_timer_v111.py
+          python3 fix_timer_cache_v111.py
 
       - name: Validate JavaScript
         run: |
@@ -39,7 +41,7 @@ jobs:
               'timerPausedForRotation=pauseSelectionTimer()',
               'if(shouldResume) resumeSelectionTimer()',
             ],
-            'cube/index.html':['v1.1.1','cube.js?v=1.1.1'],
+            'cube/index.html':['v1.1.1','cube.css?v=1.1.1','cube.js?v=1.1.1'],
             'index.html':['Word game suite · v1.1.1'],
           }
           missing=[]
