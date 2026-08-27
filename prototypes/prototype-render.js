@@ -1,11 +1,44 @@
 (()=>{
 'use strict';const s=window.WordShapeProto,V=s.V,c=s.ctx;
 function drawPyramid(){const p=s.P(),vis=s.bodyFaces.filter(f=>s.facing(f.n)>.012).map(f=>({...f,q:f.verts.map(s.proj)})).sort((a,b)=>s.depth(a.q)-s.depth(b.q));for(const f of vis){s.poly(f.q);c.fillStyle=s.shade(f.side?p.body:p.core,s.clamp(.80+s.facing(f.n)*.18,.75,1.06));c.fill();c.lineWidth=2;c.strokeStyle=p.edge;c.stroke()}}
-function drawOrb(){const p=s.P(),R=2.02,o=s.proj([0,0,0]),rad=Math.min(s.w,s.h)*.92*R/s.CAM,g=c.createRadialGradient(o.x-rad*.32,o.y-rad*.36,rad*.1,o.x,o.y,rad);(s.dark?[['#4d5753',0],['#2d3331',.52],['#1b201e',1]]:[['#7a827f',0],['#555d5a',.52],['#343a38',1]]).forEach(([x,k])=>g.addColorStop(k,x));c.beginPath();c.arc(o.x,o.y,rad,0,Math.PI*2);c.fillStyle=g;c.fill();c.strokeStyle=p.edge;c.lineWidth=2;c.stroke();c.strokeStyle=p.wire;c.lineWidth=1;for(const[a,b]of s.orbEdges){const A=s.nodes[a],B=s.nodes[b];if(s.facing(A.n)<=.02||s.facing(B.n)<=.02)continue;const x=s.proj(V.mul(A.n,R+.012)),y=s.proj(V.mul(B.n,R+.012));c.beginPath();c.moveTo(x.x,x.y);c.lineTo(y.x,y.y);c.stroke()}}
+function drawOrb(){const p=s.P(),R=2.02,o=s.proj([0,0,0]),rad=Math.min(s.w,s.h)*.92*R/s.CAM,g=c.createRadialGradient(o.x-rad*.32,o.y-rad*.36,rad*.1,o.x,o.y,rad);(s.dark?[["#4d5753",0],["#2d3331",.52],["#1b201e",1]]:[["#7a827f",0],["#555d5a",.52],["#343a38",1]]).forEach(([x,k])=>g.addColorStop(k,x));c.beginPath();c.arc(o.x,o.y,rad,0,Math.PI*2);c.fillStyle=g;c.fill();c.strokeStyle=p.edge;c.lineWidth=2;c.stroke();c.strokeStyle=p.wire;c.lineWidth=1;for(const[a,b]of s.orbEdges){const A=s.nodes[a],B=s.nodes[b];if(s.facing(A.n)<=.02||s.facing(B.n)<=.02)continue;const x=s.proj(V.mul(A.n,R+.012)),y=s.proj(V.mul(B.n,R+.012));c.beginPath();c.moveTo(x.x,x.y);c.lineTo(y.x,y.y);c.stroke()}}
 const ring=(y,r,n=96)=>Array.from({length:n+1},(_,i)=>s.cyl(i/n*Math.PI*2,y,r));
-function drawHandle(){const p=s.P(),pts=[];for(let i=0;i<=72;i++){const a=-Math.PI*.72+i/72*Math.PI*1.44;pts.push([1.53+Math.cos(a)*.82,Math.sin(a)*.97,0])}const q=pts.map(s.proj);c.beginPath();q.forEach((x,i)=>i?c.lineTo(x.x,x.y):c.moveTo(x.x,x.y));c.lineCap='round';c.strokeStyle=s.dark?'#222b29':'#33423c';c.lineWidth=24;c.stroke();c.strokeStyle=s.dark?'#59635f':'#63736c';c.lineWidth=15;c.stroke();c.strokeStyle=p.edge;c.lineWidth=2;c.stroke()}
-function drawMug(){const p=s.P(),top=-1.575,bottom=1.575,segs=[];for(let i=0;i<80;i++){const a=-Math.PI+i/80*Math.PI*2,b=-Math.PI+(i+1)/80*Math.PI*2,m=(a+b)/2,n=[Math.sin(m),0,Math.cos(m)];if(s.facing(n)<=.01)continue;const q=[s.cyl(a,top,s.mugR(top)),s.cyl(b,top,s.mugR(top)),s.cyl(b,bottom,s.mugR(bottom)),s.cyl(a,bottom,s.mugR(bottom))].map(s.proj);segs.push({q,n,d:s.depth(q)})}segs.sort((a,b)=>a.d-b.d);for(const z of segs){s.poly(z.q);c.fillStyle=s.shade(p.body2,s.clamp(.76+s.facing(z.n)*.26,.72,1.06));c.fill()}
- const outer=ring(top,s.mugR(top)).map(s.proj),inner=ring(top+.055,1.34).map(s.proj);s.poly(inner);c.fillStyle=s.dark?'rgba(0,0,0,.36)':'rgba(25,39,34,.18)';c.fill();c.beginPath();outer.forEach((x,i)=>i?c.lineTo(x.x,x.y):c.moveTo(x.x,x.y));c.closePath();c.strokeStyle=p.rim;c.lineWidth=8;c.stroke();c.beginPath();inner.forEach((x,i)=>i?c.lineTo(x.x,x.y):c.moveTo(x.x,x.y));c.closePath();c.strokeStyle=p.inner;c.lineWidth=3;c.stroke();c.beginPath();outer.forEach((x,i)=>i?c.lineTo(x.x,x.y):c.moveTo(x.x,x.y));c.closePath();c.strokeStyle=p.edge;c.lineWidth=1.4;c.stroke()}
+function drawHandle(){
+ const p=s.P(),pts=[];
+ for(let i=0;i<=96;i++){const a=-Math.PI*.72+i/96*Math.PI*1.44;pts.push([1.54+Math.cos(a)*.82,Math.sin(a)*.97,0])}
+ const q=pts.map(s.proj);c.save();c.lineCap='round';c.lineJoin='round';
+ c.beginPath();q.forEach((x,i)=>i?c.lineTo(x.x,x.y):c.moveTo(x.x,x.y));
+ c.strokeStyle=s.dark?'#90aaa2':'#b8d3ca';c.lineWidth=27;c.stroke();
+ c.strokeStyle=s.dark?'#6f8981':'#97b8ae';c.lineWidth=17;c.stroke();
+ c.strokeStyle=p.edge;c.lineWidth=1.2;c.stroke();c.restore();
+}
+function drawMug(){
+ const p=s.P(),top=1.575,bottom=-1.575,segs=[];
+ for(let i=0;i<120;i++){
+  const a=-Math.PI+i/120*Math.PI*2,b=-Math.PI+(i+1)/120*Math.PI*2,m=(a+b)/2,n=[Math.sin(m),0,Math.cos(m)];
+  if(s.facing(n)<=.008)continue;
+  const q=[s.cyl(a,top,s.mugR(top)),s.cyl(b,top,s.mugR(top)),s.cyl(b,bottom,s.mugR(bottom)),s.cyl(a,bottom,s.mugR(bottom))].map(s.proj);
+  segs.push({q,n,d:s.depth(q)})
+ }
+ segs.sort((a,b)=>a.d-b.d);
+ for(const z of segs){
+  s.poly(z.q);
+  const f=s.clamp(.90+s.facing(z.n)*.12,.86,1.04);
+  c.fillStyle=s.shade(s.dark?'#8fa9a1':'#bfd8d0',f);c.fill();
+ }
+ const coffee=ring(1.405,1.29,120).map(s.proj);
+ s.poly(coffee);
+ const cc=s.proj([0,1.405,0]),edge=s.proj([1.29,1.405,0]),rr=Math.max(10,Math.abs(edge.x-cc.x));
+ const cg=c.createRadialGradient(cc.x-rr*.28,cc.y-rr*.20,rr*.06,cc.x,cc.y,rr*1.15);
+ if(s.dark){cg.addColorStop(0,'#7e5940');cg.addColorStop(.48,'#5b3a28');cg.addColorStop(1,'#352117')}
+ else{cg.addColorStop(0,'#8b6246');cg.addColorStop(.48,'#5f3c29');cg.addColorStop(1,'#3f281c')}
+ c.fillStyle=cg;c.fill();
+ const outer=ring(top,s.mugR(top),120).map(s.proj),inner=ring(1.505,1.36,120).map(s.proj);
+ c.beginPath();outer.forEach((x,i)=>i?c.lineTo(x.x,x.y):c.moveTo(x.x,x.y));c.closePath();c.strokeStyle=s.dark?'#c3d7d0':'#dcebe6';c.lineWidth=9;c.stroke();
+ c.beginPath();inner.forEach((x,i)=>i?c.lineTo(x.x,x.y):c.moveTo(x.x,x.y));c.closePath();c.strokeStyle=s.dark?'#7d9a91':'#95b8ad';c.lineWidth=4;c.stroke();
+ c.beginPath();outer.forEach((x,i)=>i?c.lineTo(x.x,x.y):c.moveTo(x.x,x.y));c.closePath();c.strokeStyle=p.edge;c.lineWidth=1.2;c.stroke();
+ const base=ring(bottom,s.mugR(bottom),120).map(s.proj);c.beginPath();base.forEach((x,i)=>i?c.lineTo(x.x,x.y):c.moveTo(x.x,x.y));c.closePath();c.strokeStyle=s.dark?'rgba(180,210,200,.22)':'rgba(52,88,77,.18)';c.lineWidth=1.3;c.stroke();
+}
 function body(){s.mode==='pyramid'?drawPyramid():s.mode==='orb'?drawOrb():(drawHandle(),drawMug())}
 function makeRendered(){s.rendered=[];for(const n of s.nodes){const f=s.facing(n.n);if(f<=.05)continue;const pp=n.polygon.map(s.proj);s.rendered.push({id:n.id,pp,d:s.depth(pp),f})}s.rendered.sort((a,b)=>a.d-b.d)}
 function tileFill(id){const p=s.P();return s.selected.includes(id)?p.sel:s.solved.has(id)?p.sol:(s.flash.get(id)||0)>performance.now()?p.bad:p.tile}
