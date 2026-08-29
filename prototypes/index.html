@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#f3f7f4" />
-  <title>Word Shape Prototypes · v0.4.19</title>
-  <link rel="stylesheet" href="prototype.css?v=0.4.19" />
+  <title>Word Shape Prototypes · v0.4.20</title>
+  <link rel="stylesheet" href="prototype.css?v=0.4.20" />
   <style>
     .prototype-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:18px}
     .prototype-card{background:rgba(255,255,255,.82);border:1px solid var(--line);border-radius:24px;padding:18px;box-shadow:var(--shadow)}
@@ -19,7 +19,7 @@
   <main class="app-shell">
     <header class="topbar">
       <div>
-        <div class="eyebrow">3D prototype playground <span class="version-badge">v0.4.19</span></div>
+        <div class="eyebrow">3D prototype playground <span class="version-badge">v0.4.20</span></div>
         <h1>Word Shape Prototypes</h1>
         <p>Shape geometry is developed only in this prototype area. Selection, touching rules, backtracking, timer behaviour and mint/green trails deliberately follow the original Word Cube.</p>
       </div>
@@ -35,8 +35,8 @@
       <article class="prototype-card">
         <div class="preview"><div class="preview-label">◉</div></div>
         <span class="shape-badge">42 tiles · 12 pentagons + 30 hexagons</span><h2>Word Orb</h2>
-        <p>Every Orb tile belongs to exactly one target word, and once a target route is started only its one correct next tile can continue the path.</p>
-        <div class="card-actions"><a class="primary-btn" href="orb.html?v=0.4.19">Play prototype</a></div>
+        <p>Every target route now has one unique next letter among the neighbouring tiles, so there is no second plausible same-letter continuation.</p>
+        <div class="card-actions"><a class="primary-btn" href="orb.html?v=0.4.20">Play prototype</a></div>
       </article>
       <article class="prototype-card">
         <div class="preview"><div class="preview-label">☕</div></div>
@@ -45,7 +45,7 @@
         <div class="card-actions"><a class="primary-btn" href="mug.html?v=0.4.16">Play prototype</a></div>
       </article>
     </section>
-    <div class="prototype-note"><strong>v0.4.19:</strong> Orb enforces one unambiguous continuation at every step of a target route.</div>
+    <div class="prototype-note"><strong>v0.4.20:</strong> Orb routes are prevalidated so the next required letter is unique among neighbouring tiles.</div>
   </main>
 </body>
 </html>
