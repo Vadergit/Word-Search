@@ -6,16 +6,17 @@ const ui={
   stage:$('wheelStage'),wheel:$('letterWheel'),path:$('pathLine'),current:$('currentWord'),targets:$('targetList'),theme:$('wordThemeName'),
   found:$('foundStat'),score:$('scoreStat'),bonus:$('bonusStat'),letters:$('letterStat'),time:$('timeStat'),rackBadge:$('rackBadge'),
   bonusList:$('bonusList'),toast:$('toast'),newBtn:$('newBtn'),shuffleBtn:$('shuffleBtn'),clearBtn:$('clearBtn'),themeBtn:$('themeBtn'),meta:$('themeColorMeta'),
-  hintBtn:$('hintBtn'),checkBtn:$('checkWheelBtn'),difficulty:$('difficultySelect'),win:$('wheelWin'),winText:$('wheelWinText'),nextBtn:$('wheelNextBtn')
+  hintBtn:$('hintBtn'),checkBtn:$('checkWheelBtn'),difficulty:$('difficultySelect'),win:$('wheelWin'),winText:$('wheelWinText'),nextBtn:$('wheelNextBtn'),timeoutBar:$('wheelTimeoutBar')
 };
 const THEMES=Array.isArray(window.ANITAS_THEME_POOLS)?window.ANITAS_THEME_POOLS:[];
 const DICT=window.ANITAS_ENGLISH_WORDS instanceof Set?window.ANITAS_ENGLISH_WORDS:new Set();
 const BONUS_SCORE=30;
-const VERSION='0.1.1';
+const VERSION='0.1.2';
 const HINT_MS=5000;
+const AUTO_CHECK_MS=1500;
 
 let puzzle=null,order=[],selected=[],drawing=false,pointerId=null,found=new Set(),bonusFound=new Set(),score=0,startMs=0,finalMs=0,ticker=null,toastTimer=null,dark=false;
-let pointerStart=null,dragged=false,hintTimer=null;
+let pointerStart=null,dragged=false,hintTimer=null,autoCheckTimer=null;
 
 const rnd=n=>Math.floor(Math.random()*n);
 function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
@@ -72,6 +73,20 @@ function stopClock(){if(startMs)finalMs=Date.now()-startMs;startMs=0;clearInterv
 function toast(text){ui.toast.textContent=text;ui.toast.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>ui.toast.classList.remove('show'),1450)}
 function difficulty(){return ui.difficulty?.value||'beginner'}
 
+function stopAutoCheck(reset=true){
+  clearTimeout(autoCheckTimer);autoCheckTimer=null;
+  if(ui.timeoutBar){ui.timeoutBar.style.transition='none';if(reset)ui.timeoutBar.style.width='0%'}
+}
+function startAutoCheck(){
+  stopAutoCheck(false);
+  if(!selected.length)return;
+  if(ui.timeoutBar){
+    ui.timeoutBar.style.transition='none';ui.timeoutBar.style.width='100%';
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{ui.timeoutBar.style.transition=`width ${AUTO_CHECK_MS}ms linear`;ui.timeoutBar.style.width='0%'}));
+  }
+  autoCheckTimer=setTimeout(()=>evaluate(true),AUTO_CHECK_MS);
+}
+
 function renderTargets(){
   ui.targets.innerHTML='';const mode=difficulty();
   for(const word of puzzle.targets){
@@ -96,12 +111,12 @@ function updateSelectionVisuals(){
   ui.wheel.querySelectorAll('.wheel-letter').forEach(el=>{const id=Number(el.dataset.rackIndex);el.classList.toggle('active',selected.includes(id));el.classList.toggle('used',selected.includes(id))});
   const pts=selected.map(pointForRackIndex).filter(Boolean);ui.path.setAttribute('points',pts.map(p=>`${p.x},${p.y}`).join(' '));ui.current.textContent=currentWord()||'—';updateStats();
 }
-function clearSelection(){selected=[];updateSelectionVisuals()}
+function clearSelection(){stopAutoCheck();selected=[];updateSelectionVisuals()}
 function addRackIndex(id){
   if(selected.length&&selected[selected.length-1]===id)return;
-  if(selected.length>1&&selected[selected.length-2]===id){selected.pop();updateSelectionVisuals();return}
+  if(selected.length>1&&selected[selected.length-2]===id){selected.pop();updateSelectionVisuals();selected.length?startAutoCheck():stopAutoCheck();return}
   if(selected.includes(id))return;
-  selected.push(id);updateSelectionVisuals();
+  selected.push(id);updateSelectionVisuals();startAutoCheck();
 }
 function letterAtPoint(x,y){const el=document.elementFromPoint(x,y)?.closest?.('.wheel-letter');return el?Number(el.dataset.rackIndex):null}
 
@@ -112,13 +127,13 @@ function startPointer(e){
 }
 function movePointer(e){
   if(!drawing||e.pointerId!==pointerId)return;e.preventDefault();
-  if(pointerStart&&!dragged&&Math.hypot(e.clientX-pointerStart.x,e.clientY-pointerStart.y)>8){dragged=true;selected=[];addRackIndex(pointerStart.id)}
+  if(pointerStart&&!dragged&&Math.hypot(e.clientX-pointerStart.x,e.clientY-pointerStart.y)>8){dragged=true;stopAutoCheck();selected=[];addRackIndex(pointerStart.id)}
   if(dragged){const id=letterAtPoint(e.clientX,e.clientY);if(id!==null)addRackIndex(id)}
 }
 function endPointer(e){
   if(!drawing||(e.pointerId!==undefined&&e.pointerId!==pointerId))return;
   drawing=false;pointerId=null;try{ui.stage.releasePointerCapture(e.pointerId)}catch(_){}
-  if(dragged){if(selected.length>=3)evaluate();else clearSelection()}
+  if(dragged){if(selected.length>=3)evaluate(false);else clearSelection()}
   else if(pointerStart){addRackIndex(pointerStart.id)}
   pointerStart=null;dragged=false;
 }
@@ -134,13 +149,15 @@ function showHint(){
 }
 
 function completePuzzle(){
-  const elapsed=stopClock();
+  const elapsed=stopClock();stopAutoCheck();
   if(ui.winText)ui.winText.textContent=`All ${puzzle.targets.length} target words found in ${fmt(elapsed)} · ${score} points · ${bonusFound.size} bonus word${bonusFound.size===1?'':'s'}.`;
   if(ui.win)ui.win.classList.add('show');
   else toast(`Puzzle complete · ${bonusFound.size} bonus word${bonusFound.size===1?'':'s'}`);
 }
-function evaluate(){
-  const w=currentWord();if(w.length<3){toast('Select at least 3 letters');return}
+function evaluate(fromAuto=false){
+  stopAutoCheck();
+  const w=currentWord();
+  if(w.length<3){if(fromAuto){toast('Too short');clearSelection()}else toast('Select at least 3 letters');return}
   if(puzzle.targets.includes(w)&&!found.has(w)){found.add(w);score+=w.length*120;toast(`${w} found`);renderTargets()}
   else if(puzzle.targets.includes(w)&&found.has(w))toast(`${w} already found`);
   else if(DICT.has(w)&&!bonusFound.has(w)){bonusFound.add(w);score+=BONUS_SCORE;toast(`${w} bonus +${BONUS_SCORE}`);renderBonus()}
@@ -149,14 +166,14 @@ function evaluate(){
   clearSelection();updateStats();if(found.size===puzzle.targets.length)setTimeout(completePuzzle,260);
 }
 
-function shuffleLetters(){order=shuffle(order);renderWheel();toast('Letters shuffled')}
+function shuffleLetters(){stopAutoCheck();order=shuffle(order);renderWheel();selected.length?startAutoCheck():stopAutoCheck();toast('Letters shuffled')}
 function fresh(){
-  clearTimeout(hintTimer);ui.win?.classList.remove('show');puzzle=buildPuzzle();order=shuffle(puzzle.rack.map((_,i)=>i));selected=[];found=new Set();bonusFound=new Set();score=0;ui.theme.textContent=puzzle.theme;renderTargets();renderBonus();renderWheel();updateStats();startClock();toast(`${puzzle.theme} · ${puzzle.targets.length} target words`)
+  clearTimeout(hintTimer);stopAutoCheck();ui.win?.classList.remove('show');puzzle=buildPuzzle();order=shuffle(puzzle.rack.map((_,i)=>i));selected=[];found=new Set();bonusFound=new Set();score=0;ui.theme.textContent=puzzle.theme;renderTargets();renderBonus();renderWheel();updateStats();startClock();toast(`${puzzle.theme} · ${puzzle.targets.length} target words`)
 }
 function applyTheme(value){dark=value==='dark';document.documentElement.dataset.theme=dark?'dark':'light';ui.themeBtn.textContent=dark?'Light mode':'Dark mode';ui.meta?.setAttribute('content',dark?'#091311':'#f3f7f4');try{localStorage.setItem('anitasPrototypeTheme',dark?'dark':'light')}catch(_){}}
 
 ui.stage.addEventListener('pointermove',movePointer,{passive:false});ui.stage.addEventListener('pointerup',endPointer);ui.stage.addEventListener('pointercancel',endPointer);ui.stage.addEventListener('lostpointercapture',()=>{drawing=false;pointerId=null;pointerStart=null;dragged=false});
-ui.clearBtn.addEventListener('click',clearSelection);ui.shuffleBtn.addEventListener('click',shuffleLetters);ui.newBtn.addEventListener('click',fresh);ui.themeBtn.addEventListener('click',()=>applyTheme(dark?'light':'dark'));ui.hintBtn?.addEventListener('click',showHint);ui.checkBtn?.addEventListener('click',evaluate);ui.difficulty?.addEventListener('change',()=>{renderTargets();clearSelection()});ui.nextBtn?.addEventListener('click',fresh);
-window.addEventListener('blur',()=>{drawing=false;pointerId=null;pointerStart=null;dragged=false});
+ui.clearBtn.addEventListener('click',clearSelection);ui.shuffleBtn.addEventListener('click',shuffleLetters);ui.newBtn.addEventListener('click',fresh);ui.themeBtn.addEventListener('click',()=>applyTheme(dark?'light':'dark'));ui.hintBtn?.addEventListener('click',showHint);ui.checkBtn?.addEventListener('click',()=>evaluate(false));ui.difficulty?.addEventListener('change',()=>{renderTargets();clearSelection()});ui.nextBtn?.addEventListener('click',fresh);
+window.addEventListener('blur',()=>{drawing=false;pointerId=null;pointerStart=null;dragged=false;stopAutoCheck()});
 let saved='light';try{saved=localStorage.getItem('anitasPrototypeTheme')||'light'}catch(_){}applyTheme(saved);fresh();
 })();
