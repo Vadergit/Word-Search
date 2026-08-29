@@ -6,11 +6,31 @@ const ORB_COVER=[3,36,38,40,32,34,4,33,9,41,8,39,6,37,2,35,27,26,29,28,31,30,23,
 function samePath(a,b){if(!a||!b||a.length!==b.length)return false;for(let i=0;i<a.length;i++)if(a[i]!==b[i])return false;return true}
 function route(len,blocked=new Set()){for(const start of s.shuffle(s.nodes.map(n=>n.id).filter(id=>!blocked.has(id))).slice(0,40)){const p=[start],seen=new Set([start]);const dfs=()=>{if(p.length===len)return true;for(const id of s.shuffle([...s.adj.get(p.at(-1))].filter(id=>!seen.has(id)&&!blocked.has(id)))){seen.add(id);p.push(id);if(dfs())return true;p.pop();seen.delete(id)}return false};if(dfs())return p}return null}
 function buildDisjointPaths(){for(let attempt=0;attempt<160;attempt++){const paths=new Map(),blocked=new Set();let ok=true;const words=[...s.cfg.words].sort((a,b)=>b.length-a.length);for(const word of words){const p=route(word.length,blocked);if(!p){ok=false;break}paths.set(word,p);p.forEach(id=>blocked.add(id))}if(ok)return paths}throw new Error('Could not build disjoint prototype routes')}
-function buildOrbCover(){if(s.nodes.length!==42||ORB_COVER.length!==42||new Set(ORB_COVER).size!==42)throw new Error('Orb cover size mismatch');for(let i=1;i<ORB_COVER.length;i++)if(!s.adj.get(ORB_COVER[i-1])?.has(ORB_COVER[i]))throw new Error(`Orb cover adjacency mismatch at ${i}`);const words=s.shuffle([...s.cfg.words]);if(words.reduce((sum,w)=>sum+w.length,0)!==42)throw new Error('Orb target words must total exactly 42 letters');const cover=Math.random()<.5?[...ORB_COVER]:[...ORB_COVER].reverse();const paths=new Map();let offset=0;for(const word of words){const p=cover.slice(offset,offset+word.length);if(p.length!==word.length)throw new Error(`Orb segment mismatch for ${word}`);paths.set(word,p);offset+=word.length}if(offset!==42)throw new Error('Orb did not consume all tiles');return{paths,words}}
-function generate(){let paths,orderedTargets;if(s.mode==='orb'){const built=buildOrbCover();paths=built.paths;orderedTargets=built.words;s.board=new Array(s.nodes.length).fill('')}else{paths=buildDisjointPaths();orderedTargets=[...s.cfg.words];s.board=s.nodes.map(()=>s.POOL[s.rnd(s.POOL.length)])}paths.forEach((p,w)=>p.forEach((id,i)=>s.board[id]=w[i]));for(const [w,p] of paths){const spelled=p.map(id=>s.board[id]).join('');if(spelled!==w)throw new Error(`Prototype route validation failed for ${w}`);for(let i=1;i<p.length;i++)if(!s.adj.get(p[i-1]).has(p[i]))throw new Error(`Prototype adjacency validation failed for ${w}`)}if(s.mode==='orb'){if(s.board.some(ch=>!ch))throw new Error('Orb contains an unused tile');const used=[...paths.values()].flat();if(used.length!==42||new Set(used).size!==42)throw new Error('Orb routes do not cover every tile exactly once')}s.targets=orderedTargets;s.targetPaths=paths}
+function buildOrbCover(){
+  if(s.nodes.length!==42||ORB_COVER.length!==42||new Set(ORB_COVER).size!==42)throw new Error('Orb cover size mismatch');
+  for(let i=1;i<ORB_COVER.length;i++)if(!s.adj.get(ORB_COVER[i-1])?.has(ORB_COVER[i]))throw new Error(`Orb cover adjacency mismatch at ${i}`);
+  const words=[...s.cfg.words];
+  if(words.reduce((sum,w)=>sum+w.length,0)!==42)throw new Error('Orb target words must total exactly 42 letters');
+  const paths=new Map();let offset=0;
+  for(const word of words){const p=ORB_COVER.slice(offset,offset+word.length);if(p.length!==word.length)throw new Error(`Orb segment mismatch for ${word}`);paths.set(word,p);offset+=word.length}
+  if(offset!==42)throw new Error('Orb did not consume all tiles');
+  return{paths,words};
+}
+function validateOrbUniqueness(paths){
+  for(const [w,p] of paths){
+    for(let i=0;i<w.length-1;i++){
+      const expectedLetter=w[i+1],expectedTile=p[i+1];
+      const sameLetterNeighbours=[...s.adj.get(p[i])].filter(id=>s.board[id]===expectedLetter);
+      if(sameLetterNeighbours.length!==1||sameLetterNeighbours[0]!==expectedTile){
+        throw new Error(`Orb ambiguous next letter in ${w} at ${i}: ${expectedLetter}`);
+      }
+    }
+  }
+}
+function generate(){let paths,orderedTargets;if(s.mode==='orb'){const built=buildOrbCover();paths=built.paths;orderedTargets=built.words;s.board=new Array(s.nodes.length).fill('')}else{paths=buildDisjointPaths();orderedTargets=[...s.cfg.words];s.board=s.nodes.map(()=>s.POOL[s.rnd(s.POOL.length)])}paths.forEach((p,w)=>p.forEach((id,i)=>s.board[id]=w[i]));for(const [w,p] of paths){const spelled=p.map(id=>s.board[id]).join('');if(spelled!==w)throw new Error(`Prototype route validation failed for ${w}`);for(let i=1;i<p.length;i++)if(!s.adj.get(p[i-1]).has(p[i]))throw new Error(`Prototype adjacency validation failed for ${w}`)}if(s.mode==='orb'){if(s.board.some(ch=>!ch))throw new Error('Orb contains an unused tile');const used=[...paths.values()].flat();if(used.length!==42||new Set(used).size!==42)throw new Error('Orb routes do not cover every tile exactly once');validateOrbUniqueness(paths)}s.targets=orderedTargets;s.targetPaths=paths}
 function renderTargets(){ui.targets.innerHTML='';for(const w of s.targets){const e=document.createElement('div');e.className='target-chip'+(s.found.has(w)?' found':'');e.innerHTML=`<strong>${w}</strong><span>${s.found.has(w)?'Found ✓':w.length+' letters'}</span>`;ui.targets.appendChild(e)}}
 const word=()=>s.selected.map(id=>s.board[id]).join('');
-function updateUI(){ui.word.textContent=word()||'Tap a tile to start';ui.meta.textContent=s.selected.length?(s.rotating&&s.timerPaused?`Timer paused while rotating · ${(s.timerRemain/1000).toFixed(1)}s remaining`:`${s.selected.length} tile${s.selected.length===1?'':'s'} · ${s.mode==='orb'?'unique target route':'touching path'} · 8s timer`):'8 seconds after every tile · or press Check word';ui.clear.disabled=!s.selected.length;ui.check.disabled=s.selected.length<3;ui.found.textContent=`${s.found.size}/${s.targets.length}`;ui.score.textContent=s.score}
+function updateUI(){ui.word.textContent=word()||'Tap a tile to start';ui.meta.textContent=s.selected.length?(s.rotating&&s.timerPaused?`Timer paused while rotating · ${(s.timerRemain/1000).toFixed(1)}s remaining`:`${s.selected.length} tile${s.selected.length===1?'':'s'} · ${s.mode==='orb'?'unique next letter':'touching path'} · 8s timer`):'8 seconds after every tile · or press Check word';ui.clear.disabled=!s.selected.length;ui.check.disabled=s.selected.length<3;ui.found.textContent=`${s.found.size}/${s.targets.length}`;ui.score.textContent=s.score}
 function toast(text){ui.toast.textContent=text;ui.toast.classList.add('show');clearTimeout(s.toastTimer);s.toastTimer=setTimeout(()=>ui.toast.classList.remove('show'),1500)}function bad(id){s.flash.set(id,performance.now()+380);s.draw();setTimeout(()=>{s.flash.delete(id);s.draw()},400)}
 function stopTimer(reset=true){clearInterval(s.timer);s.timer=null;s.timerStart=0;s.timerPaused=false;s.timerRemain=s.SEL;if(reset)ui.bar.style.width='0%'}function startTimer(ms=s.SEL){clearInterval(s.timer);s.timerRemain=ms;s.timerStart=performance.now();s.timerPaused=false;ui.bar.style.width=ms/s.SEL*100+'%';s.timer=setInterval(()=>{const left=Math.max(0,s.timerRemain-(performance.now()-s.timerStart));ui.bar.style.width=left/s.SEL*100+'%';if(left<=0){stopTimer(false);evaluate()}},50)}function pauseTimer(){if(!s.timer)return false;s.timerRemain=Math.max(1,s.timerRemain-(performance.now()-s.timerStart));clearInterval(s.timer);s.timer=null;s.timerStart=0;s.timerPaused=true;ui.bar.style.width=s.timerRemain/s.SEL*100+'%';return true}function resumeTimer(){if(s.selected.length)startTimer(s.timerRemain)}
 function evaluate(){if(!s.selected.length)return;stopTimer();const w=word(),p=[...s.selected],intended=s.targetPaths.get(w),exact=Boolean(intended&&samePath(p,intended));if(s.targets.includes(w)&&!s.found.has(w)&&exact){s.found.add(w);s.foundPaths.set(w,p);p.forEach(id=>s.solved.add(id));s.score+=w.length*120;toast(w+' found')}else{bad(s.selected.at(-1));if(s.targets.includes(w)&&s.found.has(w))toast(w+' already found');else if(s.targets.includes(w)&&!exact)toast('Correct letters, wrong route');else toast('Not a target word')}s.selected=[];renderTargets();updateUI();s.draw();if(s.found.size===s.targets.length){const e=stopClock();ui.winText.textContent=`All ${s.targets.length} target words found in ${fmt(e)}.`;setTimeout(()=>ui.win.classList.add('show'),300)}}
@@ -19,24 +39,21 @@ function select(id){
   if(s.rotating)return;
   const i=s.selected.indexOf(id);
   if(i>=0){s.selected=s.selected.slice(0,i);updateUI();s.selected.length?startTimer():stopTimer();s.draw();return}
-
   if(s.mode==='orb'){
     if(!s.selected.length){
       let startOk=false;
       for(const [w,p] of s.targetPaths){if(!s.found.has(w)&&p[0]===id){startOk=true;break}}
       if(!startOk){bad(id);toast('Not a target start');return}
     }else{
-      const active=orbRouteForPrefix(s.selected);
-      const expected=active?.path[s.selected.length];
-      if(expected===undefined||id!==expected){bad(id);toast('Wrong route');return}
+      const active=orbRouteForPrefix(s.selected),expected=active?.path[s.selected.length];
+      if(expected===undefined||id!==expected){bad(id);toast('Wrong tile');return}
     }
   }else{
     const last=s.selected.at(-1);
     if(last!==undefined&&!s.adj.get(last).has(id)){bad(id);toast('Choose a touching tile');return}
   }
-
   s.selected.push(id);updateUI();s.draw();
-  const candidate=word();const intended=s.targetPaths.get(candidate);
+  const candidate=word(),intended=s.targetPaths.get(candidate);
   s.targets.includes(candidate)&&!s.found.has(candidate)&&samePath(s.selected,intended)?setTimeout(()=>word()===candidate&&samePath(s.selected,intended)&&evaluate(),120):startTimer()
 }
 function fmt(ms){const m=Math.floor(ms/60000),sec=Math.floor(ms%60000/1000),t=Math.floor(ms%1000/100);return`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}.${t}`}function clockUI(){ui.time.textContent=fmt(s.startMs?Date.now()-s.startMs:s.finalMs)}function startClock(){clearInterval(s.ticker);s.finalMs=0;s.startMs=Date.now();clockUI();s.ticker=setInterval(clockUI,100)}function stopClock(){if(s.startMs)s.finalMs=Date.now()-s.startMs;s.startMs=0;clearInterval(s.ticker);clockUI();return s.finalMs}
