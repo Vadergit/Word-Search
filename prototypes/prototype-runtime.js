@@ -10,11 +10,35 @@ function buildOrbCover(){if(s.nodes.length!==42||ORB_COVER.length!==42||new Set(
 function generate(){let paths,orderedTargets;if(s.mode==='orb'){const built=buildOrbCover();paths=built.paths;orderedTargets=built.words;s.board=new Array(s.nodes.length).fill('')}else{paths=buildDisjointPaths();orderedTargets=[...s.cfg.words];s.board=s.nodes.map(()=>s.POOL[s.rnd(s.POOL.length)])}paths.forEach((p,w)=>p.forEach((id,i)=>s.board[id]=w[i]));for(const [w,p] of paths){const spelled=p.map(id=>s.board[id]).join('');if(spelled!==w)throw new Error(`Prototype route validation failed for ${w}`);for(let i=1;i<p.length;i++)if(!s.adj.get(p[i-1]).has(p[i]))throw new Error(`Prototype adjacency validation failed for ${w}`)}if(s.mode==='orb'){if(s.board.some(ch=>!ch))throw new Error('Orb contains an unused tile');const used=[...paths.values()].flat();if(used.length!==42||new Set(used).size!==42)throw new Error('Orb routes do not cover every tile exactly once')}s.targets=orderedTargets;s.targetPaths=paths}
 function renderTargets(){ui.targets.innerHTML='';for(const w of s.targets){const e=document.createElement('div');e.className='target-chip'+(s.found.has(w)?' found':'');e.innerHTML=`<strong>${w}</strong><span>${s.found.has(w)?'Found ✓':w.length+' letters'}</span>`;ui.targets.appendChild(e)}}
 const word=()=>s.selected.map(id=>s.board[id]).join('');
-function updateUI(){ui.word.textContent=word()||'Tap a tile to start';ui.meta.textContent=s.selected.length?(s.rotating&&s.timerPaused?`Timer paused while rotating · ${(s.timerRemain/1000).toFixed(1)}s remaining`:`${s.selected.length} tile${s.selected.length===1?'':'s'} · touching path · 8s timer`):'8 seconds after every tile · or press Check word';ui.clear.disabled=!s.selected.length;ui.check.disabled=s.selected.length<3;ui.found.textContent=`${s.found.size}/${s.targets.length}`;ui.score.textContent=s.score}
+function updateUI(){ui.word.textContent=word()||'Tap a tile to start';ui.meta.textContent=s.selected.length?(s.rotating&&s.timerPaused?`Timer paused while rotating · ${(s.timerRemain/1000).toFixed(1)}s remaining`:`${s.selected.length} tile${s.selected.length===1?'':'s'} · ${s.mode==='orb'?'unique target route':'touching path'} · 8s timer`):'8 seconds after every tile · or press Check word';ui.clear.disabled=!s.selected.length;ui.check.disabled=s.selected.length<3;ui.found.textContent=`${s.found.size}/${s.targets.length}`;ui.score.textContent=s.score}
 function toast(text){ui.toast.textContent=text;ui.toast.classList.add('show');clearTimeout(s.toastTimer);s.toastTimer=setTimeout(()=>ui.toast.classList.remove('show'),1500)}function bad(id){s.flash.set(id,performance.now()+380);s.draw();setTimeout(()=>{s.flash.delete(id);s.draw()},400)}
 function stopTimer(reset=true){clearInterval(s.timer);s.timer=null;s.timerStart=0;s.timerPaused=false;s.timerRemain=s.SEL;if(reset)ui.bar.style.width='0%'}function startTimer(ms=s.SEL){clearInterval(s.timer);s.timerRemain=ms;s.timerStart=performance.now();s.timerPaused=false;ui.bar.style.width=ms/s.SEL*100+'%';s.timer=setInterval(()=>{const left=Math.max(0,s.timerRemain-(performance.now()-s.timerStart));ui.bar.style.width=left/s.SEL*100+'%';if(left<=0){stopTimer(false);evaluate()}},50)}function pauseTimer(){if(!s.timer)return false;s.timerRemain=Math.max(1,s.timerRemain-(performance.now()-s.timerStart));clearInterval(s.timer);s.timer=null;s.timerStart=0;s.timerPaused=true;ui.bar.style.width=s.timerRemain/s.SEL*100+'%';return true}function resumeTimer(){if(s.selected.length)startTimer(s.timerRemain)}
 function evaluate(){if(!s.selected.length)return;stopTimer();const w=word(),p=[...s.selected],intended=s.targetPaths.get(w),exact=Boolean(intended&&samePath(p,intended));if(s.targets.includes(w)&&!s.found.has(w)&&exact){s.found.add(w);s.foundPaths.set(w,p);p.forEach(id=>s.solved.add(id));s.score+=w.length*120;toast(w+' found')}else{bad(s.selected.at(-1));if(s.targets.includes(w)&&s.found.has(w))toast(w+' already found');else if(s.targets.includes(w)&&!exact)toast('Correct letters, wrong route');else toast('Not a target word')}s.selected=[];renderTargets();updateUI();s.draw();if(s.found.size===s.targets.length){const e=stopClock();ui.winText.textContent=`All ${s.targets.length} target words found in ${fmt(e)}.`;setTimeout(()=>ui.win.classList.add('show'),300)}}
-function select(id){if(s.rotating)return;const i=s.selected.indexOf(id);if(i>=0){s.selected=s.selected.slice(0,i);updateUI();s.selected.length?startTimer():stopTimer();s.draw();return}const last=s.selected.at(-1);if(last!==undefined&&!s.adj.get(last).has(id)){bad(id);toast('Choose a touching tile');return}s.selected.push(id);updateUI();s.draw();const candidate=word();const intended=s.targetPaths.get(candidate);s.targets.includes(candidate)&&!s.found.has(candidate)&&samePath(s.selected,intended)?setTimeout(()=>word()===candidate&&samePath(s.selected,intended)&&evaluate(),120):startTimer()}
+function orbRouteForPrefix(ids){for(const [w,p] of s.targetPaths){if(s.found.has(w)||ids.length>p.length)continue;let ok=true;for(let i=0;i<ids.length;i++){if(p[i]!==ids[i]){ok=false;break}}if(ok)return{word:w,path:p}}return null}
+function select(id){
+  if(s.rotating)return;
+  const i=s.selected.indexOf(id);
+  if(i>=0){s.selected=s.selected.slice(0,i);updateUI();s.selected.length?startTimer():stopTimer();s.draw();return}
+
+  if(s.mode==='orb'){
+    if(!s.selected.length){
+      let startOk=false;
+      for(const [w,p] of s.targetPaths){if(!s.found.has(w)&&p[0]===id){startOk=true;break}}
+      if(!startOk){bad(id);toast('Not a target start');return}
+    }else{
+      const active=orbRouteForPrefix(s.selected);
+      const expected=active?.path[s.selected.length];
+      if(expected===undefined||id!==expected){bad(id);toast('Wrong route');return}
+    }
+  }else{
+    const last=s.selected.at(-1);
+    if(last!==undefined&&!s.adj.get(last).has(id)){bad(id);toast('Choose a touching tile');return}
+  }
+
+  s.selected.push(id);updateUI();s.draw();
+  const candidate=word();const intended=s.targetPaths.get(candidate);
+  s.targets.includes(candidate)&&!s.found.has(candidate)&&samePath(s.selected,intended)?setTimeout(()=>word()===candidate&&samePath(s.selected,intended)&&evaluate(),120):startTimer()
+}
 function fmt(ms){const m=Math.floor(ms/60000),sec=Math.floor(ms%60000/1000),t=Math.floor(ms%1000/100);return`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}.${t}`}function clockUI(){ui.time.textContent=fmt(s.startMs?Date.now()-s.startMs:s.finalMs)}function startClock(){clearInterval(s.ticker);s.finalMs=0;s.startMs=Date.now();clockUI();s.ticker=setInterval(clockUI,100)}function stopClock(){if(s.startMs)s.finalMs=Date.now()-s.startMs;s.startMs=0;clearInterval(s.ticker);clockUI();return s.finalMs}
 function reset(){s.rx=s.clamp(s.cfg.rx,-78,78);s.ry=s.cfg.ry;s.draw()}function fresh(){stopTimer();stopClock();s.selected=[];s.found=new Set();s.foundPaths=new Map();s.solved=new Set();s.score=0;s.flash=new Map();ui.win.classList.remove('show');generate();renderTargets();updateUI();reset();startClock();toast(`New ${s.cfg.name} prototype · v${s.ver}`)}
 function applyTheme(value){s.dark=value==='dark';document.documentElement.dataset.theme=s.dark?'dark':'light';ui.theme.textContent=s.dark?'Light mode':'Dark mode';ui.metaColor?.setAttribute('content',s.dark?'#091311':'#f3f7f4');try{localStorage.setItem('anitasPrototypeTheme',s.dark?'dark':'light')}catch(_){}s.draw()}
