@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" id="themeColorMeta" content="#f3f7f4" />
-  <title>Word Wheel Prototype · v0.1.1</title>
+  <title>Word Wheel Prototype · v0.1.2</title>
   <link rel="stylesheet" href="prototype.css?v=0.4.24" />
   <style>
     .wheel-layout{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(300px,.8fr);gap:18px;align-items:start}
@@ -12,6 +12,7 @@
     .wheel-panel{padding:18px}.wheel-side{padding:18px;position:sticky;top:16px}
     .wheel-stage{position:relative;min-height:620px;border:1px solid rgba(31,72,58,.08);border-radius:22px;overflow:hidden;background:linear-gradient(rgba(31,72,58,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(31,72,58,.045) 1px,transparent 1px),radial-gradient(circle at 50% 54%,rgba(69,205,176,.13),transparent 42%);background-size:28px 28px,28px 28px,auto;touch-action:none;user-select:none;-webkit-user-select:none}
     .wheel-current{position:absolute;top:28px;left:50%;transform:translateX(-50%);z-index:8;min-width:min(420px,80%);text-align:center}.wheel-current span{display:block;color:var(--muted);font-size:11px;font-weight:800;letter-spacing:.18em;text-transform:uppercase}.wheel-current strong{display:block;min-height:48px;margin-top:5px;font-size:38px;letter-spacing:.13em;color:var(--ink)}
+    .wheel-timeout{height:5px;width:min(360px,72vw);margin:8px auto 0;border-radius:999px;background:#e7efea;overflow:hidden}.wheel-timeout>div{height:100%;width:0%;background:linear-gradient(90deg,#45cdb0,#8dcd56);transform-origin:left}
     .letter-wheel{position:absolute;width:min(440px,78vw);height:min(440px,78vw);max-width:440px;max-height:440px;left:50%;top:55%;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.94),rgba(232,246,240,.78));border:1px solid rgba(31,72,58,.10);box-shadow:inset 0 0 0 12px rgba(255,255,255,.38),0 24px 55px rgba(38,76,63,.12)}
     .wheel-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}.wheel-svg polyline{fill:none;stroke:#45cdb0;stroke-width:15;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 3px 0 rgba(20,126,103,.16))}
     .wheel-letter{position:absolute;width:72px;height:72px;margin:-36px 0 0 -36px;border:0;border-radius:24px;background:#fbfdfa;color:#173028;font:800 32px/1 Georgia,"Times New Roman",serif;box-shadow:0 8px 22px rgba(29,66,54,.13),inset 0 0 0 1px rgba(23,48,40,.12);display:grid;place-items:center;z-index:4;touch-action:none}.wheel-letter.active{background:#55d7b9;color:#102c24;box-shadow:0 8px 22px rgba(29,66,54,.14),inset 0 0 0 3px #147e67}.wheel-letter.used{transform:scale(.94)}.wheel-letter.hint{outline:5px solid rgba(255,196,67,.65);outline-offset:3px;animation:hintPulse .8s ease-in-out infinite alternate}@keyframes hintPulse{to{transform:scale(1.08)}}
@@ -29,7 +30,7 @@
 <body>
   <main class="app-shell">
     <header class="topbar">
-      <div><div class="eyebrow">Word prototype <span class="version-badge">v0.1.1</span></div><h1>Word Wheel</h1><p>Connect letters around the wheel by dragging or simply tapping them one after another. The prototype uses the same theme library and offline bonus-word dictionary as the other Word Path games.</p></div>
+      <div><div class="eyebrow">Word prototype <span class="version-badge">v0.1.2</span></div><h1>Word Wheel</h1><p>Connect letters around the wheel by dragging or tapping them one after another. Tap input is automatically checked after the same 1.5-second timeout used by the 2D Word Path game.</p></div>
       <div class="top-actions"><span class="prototype-badge">Prototype</span><a class="ghost-btn" href="index.html">Prototype menu</a><button class="ghost-btn" id="themeBtn" type="button">Dark mode</button><button class="primary-btn small" id="newBtn" type="button">New puzzle</button></div>
     </header>
 
@@ -39,9 +40,9 @@
 
     <section class="wheel-layout">
       <div class="wheel-panel">
-        <div class="interaction-note"><span class="dot"></span>Drag through letters and release to check automatically, or tap letters one after another and press Check.</div>
+        <div class="interaction-note"><span class="dot"></span>Drag through letters and release to check immediately, or tap letters one after another. After each tap you have 1.5 seconds before the current word is checked automatically.</div>
         <div class="wheel-stage" id="wheelStage">
-          <div class="wheel-current"><span>Current word</span><strong id="currentWord">—</strong></div>
+          <div class="wheel-current"><span>Current word</span><strong id="currentWord">—</strong><div class="wheel-timeout" aria-hidden="true"><div id="wheelTimeoutBar"></div></div></div>
           <div class="letter-wheel" id="letterWheel"><svg class="wheel-svg" id="wheelSvg" viewBox="0 0 440 440" preserveAspectRatio="none"><polyline id="pathLine" points=""></polyline></svg></div>
           <div class="wheel-actions"><button class="secondary-btn" id="clearBtn" type="button">Clear</button><button class="secondary-btn" id="shuffleBtn" type="button">Shuffle</button><button class="secondary-btn" id="hintBtn" type="button">Hint</button><button class="primary-btn" id="checkWheelBtn" type="button" disabled>Check</button></div>
         </div>
@@ -54,12 +55,12 @@
         <p class="section-copy">Beginner shows the first letter and allows hints. A hint highlights all wheel tiles needed for one unsolved target for 5 seconds. Middle hides the first letter but keeps hints. Hard removes hints.</p>
         <div class="target-grid" id="targetList"></div>
         <div class="bonus-box"><strong>Bonus words</strong><p>Any other valid English word of 3+ letters that can be traced with the wheel letters scores 30 bonus points once per puzzle.</p><div class="bonus-list" id="bonusList"></div></div>
-        <div class="wheel-help"><b>Drag:</b> start on a letter and move through the others; release checks automatically. <b>Tap:</b> tap letters one after another, then press Check. <b>Backtrack:</b> tap the second-last letter to remove the last step. <b>Shuffle:</b> only changes positions.</div>
+        <div class="wheel-help"><b>Drag:</b> release checks immediately. <b>Tap:</b> every tap restarts the 1.5-second countdown; when it reaches zero the word is checked automatically. <b>Backtrack:</b> tap the second-last letter to remove the last step. <b>Shuffle:</b> only changes positions.</div>
       </aside>
     </section>
   </main>
   <div class="toast-wheel" id="toast" role="status" aria-live="polite"></div>
   <div class="wheel-win" id="wheelWin" role="dialog" aria-modal="true"><div class="wheel-win-card"><div class="wheel-win-mark">✓</div><div class="eyebrow">Puzzle complete</div><h2>Wheel solved.</h2><p id="wheelWinText"></p><button class="primary-btn" id="wheelNextBtn" type="button">Next puzzle</button></div></div>
-  <script src="../themes-data.js?v=1.4.4"></script><script src="../words.js?v=1.0.0"></script><script src="wheel.js?v=0.1.1"></script>
+  <script src="../themes-data.js?v=1.4.4"></script><script src="../words.js?v=1.0.0"></script><script src="wheel.js?v=0.1.2"></script>
 </body>
 </html>
