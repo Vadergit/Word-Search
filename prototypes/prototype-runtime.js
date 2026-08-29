@@ -4,7 +4,10 @@
    consecutive pair is a real edge and every node occurs exactly once. */
 const ORB_COVER=[3,36,38,40,32,34,4,33,9,41,8,39,6,37,2,35,27,26,29,28,31,30,23,1,17,7,19,10,21,20,18,16,0,12,11,24,13,14,15,5,25,22];
 const ORB_FALLBACK=['ORBIT','ROUND','GLOBE','SPHERE','WORLD','CURVE','ORB','AXIS','RING'];
+const BONUS_SCORE=30;
+const ENGLISH_WORDS=window.ANITAS_ENGLISH_WORDS instanceof Set?window.ANITAS_ENGLISH_WORDS:new Set();
 let activeOrbTheme='Orb Classics';
+let foundBonus=new Set();
 function samePath(a,b){if(!a||!b||a.length!==b.length)return false;for(let i=0;i<a.length;i++)if(a[i]!==b[i])return false;return true}
 function route(len,blocked=new Set()){for(const start of s.shuffle(s.nodes.map(n=>n.id).filter(id=>!blocked.has(id))).slice(0,40)){const p=[start],seen=new Set([start]);const dfs=()=>{if(p.length===len)return true;for(const id of s.shuffle([...s.adj.get(p.at(-1))].filter(id=>!seen.has(id)&&!blocked.has(id)))){seen.add(id);p.push(id);if(dfs())return true;p.pop();seen.delete(id)}return false};if(dfs())return p}return null}
 function buildDisjointPaths(){for(let attempt=0;attempt<160;attempt++){const paths=new Map(),blocked=new Set();let ok=true;const words=[...s.cfg.words].sort((a,b)=>b.length-a.length);for(const word of words){const p=route(word.length,blocked);if(!p){ok=false;break}paths.set(word,p);p.forEach(id=>blocked.add(id))}if(ok)return paths}throw new Error('Could not build disjoint prototype routes')}
@@ -82,7 +85,26 @@ const word=()=>s.selected.map(id=>s.board[id]).join('');
 function updateUI(){ui.word.textContent=word()||'Tap a tile to start';ui.meta.textContent=s.selected.length?(s.rotating&&s.timerPaused?`Timer paused while rotating · ${(s.timerRemain/1000).toFixed(1)}s remaining`:`${s.selected.length} tile${s.selected.length===1?'':'s'} · touching path · 8s timer`):'8 seconds after every tile · or press Check word';ui.clear.disabled=!s.selected.length;ui.check.disabled=s.selected.length<3;ui.found.textContent=`${s.found.size}/${s.targets.length}`;ui.score.textContent=s.score}
 function toast(text){ui.toast.textContent=text;ui.toast.classList.add('show');clearTimeout(s.toastTimer);s.toastTimer=setTimeout(()=>ui.toast.classList.remove('show'),1500)}function bad(id){s.flash.set(id,performance.now()+380);s.draw();setTimeout(()=>{s.flash.delete(id);s.draw()},400)}
 function stopTimer(reset=true){clearInterval(s.timer);s.timer=null;s.timerStart=0;s.timerPaused=false;s.timerRemain=s.SEL;if(reset)ui.bar.style.width='0%'}function startTimer(ms=s.SEL){clearInterval(s.timer);s.timerRemain=ms;s.timerStart=performance.now();s.timerPaused=false;ui.bar.style.width=ms/s.SEL*100+'%';s.timer=setInterval(()=>{const left=Math.max(0,s.timerRemain-(performance.now()-s.timerStart));ui.bar.style.width=left/s.SEL*100+'%';if(left<=0){stopTimer(false);evaluate()}},50)}function pauseTimer(){if(!s.timer)return false;s.timerRemain=Math.max(1,s.timerRemain-(performance.now()-s.timerStart));clearInterval(s.timer);s.timer=null;s.timerStart=0;s.timerPaused=true;ui.bar.style.width=s.timerRemain/s.SEL*100+'%';return true}function resumeTimer(){if(s.selected.length)startTimer(s.timerRemain)}
-function evaluate(){if(!s.selected.length)return;stopTimer();const w=word(),p=[...s.selected],intended=s.targetPaths.get(w),exact=Boolean(intended&&samePath(p,intended));if(s.targets.includes(w)&&!s.found.has(w)&&exact){s.found.add(w);s.foundPaths.set(w,p);p.forEach(id=>s.solved.add(id));s.score+=w.length*120;toast(w+' found')}else{bad(s.selected.at(-1));if(s.targets.includes(w)&&s.found.has(w))toast(w+' already found');else if(s.targets.includes(w)&&!exact)toast('Correct letters, wrong route');else toast('Not a target word')}s.selected=[];renderTargets();updateUI();s.draw();if(s.found.size===s.targets.length){const e=stopClock();ui.winText.textContent=`All ${s.targets.length} target words found in ${fmt(e)}.`;setTimeout(()=>ui.win.classList.add('show'),300)}}
+function evaluate(){
+  if(!s.selected.length)return;
+  stopTimer();
+  const w=word(),p=[...s.selected],intended=s.targetPaths.get(w),exact=Boolean(intended&&samePath(p,intended));
+  if(s.targets.includes(w)&&!s.found.has(w)&&exact){
+    s.found.add(w);s.foundPaths.set(w,p);p.forEach(id=>s.solved.add(id));s.score+=w.length*120;toast(w+' found');
+  }else if(s.targets.includes(w)&&s.found.has(w)){
+    bad(s.selected.at(-1));toast(w+' already found');
+  }else if(s.targets.includes(w)&&!exact){
+    bad(s.selected.at(-1));toast('Correct letters, wrong route');
+  }else if(w.length>=3&&ENGLISH_WORDS.has(w)&&!foundBonus.has(w)){
+    foundBonus.add(w);s.score+=BONUS_SCORE;toast(`${w} bonus +${BONUS_SCORE}`);
+  }else if(foundBonus.has(w)){
+    bad(s.selected.at(-1));toast(w+' bonus already found');
+  }else{
+    bad(s.selected.at(-1));toast('Not a target word');
+  }
+  s.selected=[];renderTargets();updateUI();s.draw();
+  if(s.found.size===s.targets.length){const e=stopClock();ui.winText.textContent=`All ${s.targets.length} target words found in ${fmt(e)} · ${foundBonus.size} bonus word${foundBonus.size===1?'':'s'}.`;setTimeout(()=>ui.win.classList.add('show'),300)}
+}
 function select(id){
   if(s.rotating)return;
   const i=s.selected.indexOf(id);
@@ -94,7 +116,7 @@ function select(id){
   s.targets.includes(candidate)&&!s.found.has(candidate)&&samePath(s.selected,intended)?setTimeout(()=>word()===candidate&&samePath(s.selected,intended)&&evaluate(),120):startTimer()
 }
 function fmt(ms){const m=Math.floor(ms/60000),sec=Math.floor(ms%60000/1000),t=Math.floor(ms%1000/100);return`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}.${t}`}function clockUI(){ui.time.textContent=fmt(s.startMs?Date.now()-s.startMs:s.finalMs)}function startClock(){clearInterval(s.ticker);s.finalMs=0;s.startMs=Date.now();clockUI();s.ticker=setInterval(clockUI,100)}function stopClock(){if(s.startMs)s.finalMs=Date.now()-s.startMs;s.startMs=0;clearInterval(s.ticker);clockUI();return s.finalMs}
-function reset(){s.rx=s.clamp(s.cfg.rx,-78,78);s.ry=s.cfg.ry;s.draw()}function fresh(){stopTimer();stopClock();s.selected=[];s.found=new Set();s.foundPaths=new Map();s.solved=new Set();s.score=0;s.flash=new Map();ui.win.classList.remove('show');generate();renderTargets();updateUI();reset();startClock();toast(s.mode==='orb'?`${activeOrbTheme} · ${s.targets.length} words`:`New ${s.cfg.name} prototype · v${s.ver}`)}
+function reset(){s.rx=s.clamp(s.cfg.rx,-78,78);s.ry=s.cfg.ry;s.draw()}function fresh(){stopTimer();stopClock();s.selected=[];s.found=new Set();s.foundPaths=new Map();s.solved=new Set();foundBonus=new Set();s.score=0;s.flash=new Map();ui.win.classList.remove('show');generate();renderTargets();updateUI();reset();startClock();toast(s.mode==='orb'?`${activeOrbTheme} · ${s.targets.length} words`:`New ${s.cfg.name} prototype · v${s.ver}`)}
 function applyTheme(value){s.dark=value==='dark';document.documentElement.dataset.theme=s.dark?'dark':'light';ui.theme.textContent=s.dark?'Light mode':'Dark mode';ui.metaColor?.setAttribute('content',s.dark?'#091311':'#f3f7f4');try{localStorage.setItem('anitasPrototypeTheme',s.dark?'dark':'light')}catch(_){}s.draw()}
 s.canvas.addEventListener('pointerdown',e=>{if(e.button!==undefined&&e.button!==0)return;const id=s.hit(e.clientX,e.clientY);if(id!==null){select(id);return}s.rotating=true;s.pid=e.pointerId;s.lx=e.clientX;s.ly=e.clientY;s.timerPaused=pauseTimer();updateUI();try{s.canvas.setPointerCapture(e.pointerId)}catch(_){}s.stage.classList.add('rotating')});
 s.canvas.addEventListener('pointermove',e=>{if(!s.rotating||e.pointerId!==s.pid)return;const dx=e.clientX-s.lx,dy=e.clientY-s.ly;s.lx=e.clientX;s.ly=e.clientY;s.ry=s.normAng(s.ry+dx*.34);s.rx=s.clamp(s.rx-dy*.34,-78,78);s.draw()});
