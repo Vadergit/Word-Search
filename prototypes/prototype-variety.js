@@ -33,7 +33,6 @@
       const all=[...theme.words];
       const fresh=all.filter(word=>!recentWords.has(word));
       const freshShort=fresh.filter(word=>word.length>=3&&word.length<=10);
-      const allShort=all.filter(word=>word.length>=3&&word.length<=10);
       const usable=freshShort.length>=14&&freshShort.reduce((sum,w)=>sum+w.length,0)>=90?fresh:all;
       return{name:theme.name,words:usable};
     });
@@ -128,7 +127,8 @@
   }
 
   function attachShape(state){
-    if(!state||!['pyramid','mug'].includes(state.mode))return;
+    if(!state||!['pyramid','mug'].includes(state.mode)||state.__anitasVarietyAttached)return;
+    state.__anitasVarietyAttached=true;
     const prepare=()=>{
       const pick=chooseShapeSet(state.mode);
       if(!pick)return;
@@ -155,4 +155,5 @@
 
   observeSharedThemeGame();
   window.ANITAS_PROTOTYPE_VARIETY=Object.freeze({attachShape,themePool,chooseShapeSet});
+  if(window.WordShapeProto)attachShape(window.WordShapeProto);
 })();
