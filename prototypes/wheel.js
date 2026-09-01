@@ -1,6 +1,22 @@
 (()=>{
 'use strict';
 
+/* Wheel has its own runtime, so load the same cross-game variety layer before
+   taking the theme-pool reference. The proxy remains live for every New puzzle. */
+if(!window.ANITAS_PROTOTYPE_VARIETY){
+  const script=document.currentScript;
+  const base=script?new URL('.',script.src):new URL('./',location.href);
+  const root=script?new URL('../',script.src):new URL('../',location.href);
+  let html='';
+  if(!window.ANITAS_THEME_POOLS)html+=`<script src="${new URL('themes-data.js?v=1.4.4',root).href}"><\/script>`;
+  if(!window.ANITAS_VARIETY){
+    html+=`<script src="${new URL('variety-hotfix.js?v=1.5.0',root).href}"><\/script>`;
+    html+=`<script src="${new URL('variety-profile-bridge.js?v=1.5.0',root).href}"><\/script>`;
+  }
+  html+=`<script src="${new URL('prototype-variety.js?v=1.5.0',base).href}"><\/script>`;
+  document.write(html);
+}
+
 const $=id=>document.getElementById(id);
 const ui={
   stage:$('wheelStage'),wheel:$('letterWheel'),path:$('pathLine'),current:$('currentWord'),targets:$('targetList'),theme:$('wordThemeName'),
@@ -11,7 +27,7 @@ const ui={
 const THEMES=Array.isArray(window.ANITAS_THEME_POOLS)?window.ANITAS_THEME_POOLS:[];
 const DICT=window.ANITAS_ENGLISH_WORDS instanceof Set?window.ANITAS_ENGLISH_WORDS:new Set();
 const BONUS_SCORE=30;
-const VERSION='0.1.2';
+const VERSION='0.1.4';
 const HINT_MS=5000;
 const AUTO_CHECK_MS=1500;
 
