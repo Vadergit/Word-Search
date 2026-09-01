@@ -1,8 +1,9 @@
 (()=>{
 'use strict';
 
-/* Wheel has its own runtime, so load the same cross-game variety layer before
-   taking the theme-pool reference. The proxy remains live for every New puzzle. */
+/* Wheel has its own runtime. On the first pass, inject the shared variety
+   dependencies and queue this runtime once more. The second pass then starts
+   only after those scripts have executed. */
 if(!window.ANITAS_PROTOTYPE_VARIETY){
   const script=document.currentScript;
   const base=script?new URL('.',script.src):new URL('./',location.href);
@@ -14,7 +15,11 @@ if(!window.ANITAS_PROTOTYPE_VARIETY){
     html+=`<script src="${new URL('variety-profile-bridge.js?v=1.5.0',root).href}"><\/script>`;
   }
   html+=`<script src="${new URL('prototype-variety.js?v=1.5.0',base).href}"><\/script>`;
+  const reboot=script?new URL(script.src):new URL('wheel.js',base);
+  reboot.searchParams.set('variety','1.5.0');
+  html+=`<script src="${reboot.href}"><\/script>`;
   document.write(html);
+  return;
 }
 
 const $=id=>document.getElementById(id);
