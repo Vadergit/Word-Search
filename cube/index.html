@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" id="themeColorMeta" content="#f3f7f4" />
-  <title>Anitas Word Cube · v1.4.5</title>
+  <title>Anitas Word Cube · v1.5.0</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23091311'/%3E%3Cg fill='none' stroke='%2359c9c4' stroke-width='5' stroke-linecap='round'%3E%3Cpath d='M18 18h14v14H18zM32 32h14v14H32zM25 25l14 14'/%3E%3C/g%3E%3C/svg%3E" />
   <link rel="stylesheet" href="cube.css?v=1.4.0" />
 </head>
@@ -12,7 +12,7 @@
   <main class="app-shell">
     <header class="topbar">
       <div>
-        <div class="eyebrow">3D game <span class="version-badge">v1.4.5</span></div>
+        <div class="eyebrow">3D game <span class="version-badge">v1.5.0</span></div>
         <h1>Anitas Word Cube</h1>
         <p>Find words across a rotatable 3×3 cube. Paths may continue over cube edges onto another face.</p>
       </div>
@@ -78,7 +78,7 @@
             <div><h2>Target words</h2></div>
             <div class="face-badge">3×3 × 6</div>
           </div>
-          <p class="section-copy">The 3D cube uses the same 19 themes and 936+ theme words as the 2D game. Every tile belongs to exactly one target route, all 54 letters are covered, and every target has exactly one valid path.</p>
+          <p class="section-copy">The 3D cube uses the same 19 themes and 936+ theme words as the 2D game. New cubes now prioritise fresh categories and unused word combinations while keeping all 54 letters covered by valid target routes.</p>
           <div class="difficulty-message" id="difficultyMessage"></div>
           <div class="target-list" id="targetList"></div>
         </div>
@@ -132,6 +132,6 @@
   <script src="../themes.js?v=1.4.4"></script>
   <script src="../words.js"></script>
   <script src="letter-layout.js?v=1.1.0"></script>
-  <script src="cube.js?v=1.4.0"></script>
+  <script src="cube-variety-loader.js?v=1.5.0"></script>
 </body>
 </html>
