@@ -1,5 +1,24 @@
 (()=>{
 'use strict';
+
+/* Load the same shared theme/variety history used by 2D, Cube and Wheel.
+   This runs before the prototype runtime so every New puzzle can draw from
+   the full theme library instead of the old fixed six-word lists. */
+if(!window.ANITAS_PROTOTYPE_VARIETY){
+ const script=document.currentScript;
+ const base=script?new URL('.',script.src):new URL('./',location.href);
+ const root=script?new URL('../',script.src):new URL('../',location.href);
+ let html='';
+ if(!window.ANITAS_THEME_POOLS)html+=`<script src="${new URL('themes-data.js?v=1.4.4',root).href}"><\/script>`;
+ if(!window.ANITAS_VARIETY){
+  html+=`<script src="${new URL('variety-hotfix.js?v=1.5.0',root).href}"><\/script>`;
+  html+=`<script src="${new URL('variety-profile-bridge.js?v=1.5.0',root).href}"><\/script>`;
+ }
+ if(!(window.ANITAS_ENGLISH_WORDS instanceof Set))html+=`<script src="${new URL('words.js?v=1.0.0',root).href}"><\/script>`;
+ html+=`<script src="${new URL('prototype-variety.js?v=1.5.0',base).href}"><\/script>`;
+ document.write(html);
+}
+
 const mode=document.body.dataset.mode;
 const cfg={
  pyramid:{name:'Word Pyramid',words:['PEAK','ROCK','CLIMB','RIDGE','STONE','TRAIL'],rx:-20,ry:-30,route:'Edges'},
@@ -23,4 +42,5 @@ s.poly=a=>{if(!a.length)return;s.ctx.beginPath();s.ctx.moveTo(a[0].x,a[0].y);for
 s.shade=(hex,k)=>{const n=parseInt(hex.slice(1),16),f=x=>Math.round(clamp(x*k,0,255)).toString(16).padStart(2,'0');return'#'+f((n>>16)&255)+f((n>>8)&255)+f(n&255)};
 s.basis=(n,seed)=>{n=V.norm(n);let u=seed?V.sub(seed,V.mul(n,V.dot(seed,n))):null;if(!u||V.len(u)<1e-6)u=V.cross(Math.abs(n[1])<.9?[0,1,0]:[1,0,0],n);u=V.norm(u);return{u,v:V.norm(V.cross(n,u))}};s.ext=(c,pts,u,v)=>{let hu=.1,hv=.1;for(const p of pts){const d=V.sub(p,c);hu=Math.max(hu,Math.abs(V.dot(d,u)));hv=Math.max(hv,Math.abs(V.dot(d,v)))}return{hu,hv}};s.shrink=(pts,c,k=.91)=>pts.map(p=>V.lerp(c,p,k));
 window.WordShapeProto=s;
+window.ANITAS_PROTOTYPE_VARIETY?.attachShape?.(s);
 })();
