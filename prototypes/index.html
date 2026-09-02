@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#f3f7f4" />
-  <title>Word Shape Prototypes · v0.4.25</title>
+  <title>Word Shape Prototypes · v0.4.26</title>
   <link rel="stylesheet" href="prototype.css?v=0.4.24" />
   <style>
     .prototype-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:16px;margin-top:18px}
@@ -13,6 +13,7 @@
     .preview{height:230px;border-radius:18px;border:1px solid rgba(31,72,58,.08);background:linear-gradient(rgba(31,72,58,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(31,72,58,.045) 1px,transparent 1px),radial-gradient(circle at center,rgba(69,205,176,.10),transparent 55%);background-size:28px 28px,28px 28px,auto;display:grid;place-items:center;overflow:hidden}
     .preview-label{font-family:Georgia,serif;font-size:58px;font-weight:800;color:#27443a;text-shadow:0 14px 30px rgba(30,70,55,.16)}.card-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
     .wheel-preview{position:relative;width:150px;height:150px;border-radius:50%;background:rgba(69,205,176,.08);border:1px solid rgba(31,72,58,.1)}.wheel-preview span{position:absolute;width:38px;height:38px;margin:-19px;border-radius:13px;background:#fff;display:grid;place-items:center;font:800 19px Georgia,serif;box-shadow:0 5px 12px rgba(31,72,58,.1)}.wheel-preview i{position:absolute;height:6px;background:#55d7b9;border-radius:999px;transform-origin:left center;left:75px;top:72px;width:58px;transform:rotate(-145deg)}
+    .shikaku-preview{display:grid;grid-template-columns:repeat(5,26px);grid-template-rows:repeat(5,26px);gap:3px;padding:12px;border-radius:18px;background:#fff;border:1px solid rgba(31,72,58,.1);box-shadow:0 12px 28px rgba(31,72,58,.1)}.shikaku-preview span{display:grid;place-items:center;border-radius:5px;background:#edf4ef;font-size:11px;font-weight:900;color:#29453b}.shikaku-preview .a{background:#a9e8d1}.shikaku-preview .b{background:#d9ccff}.shikaku-preview .c{background:#f4d58a}.shikaku-preview .d{background:#b8d9ff}
     @media(max-width:900px){.prototype-card p{min-height:0}}
   </style>
 </head>
@@ -20,9 +21,9 @@
   <main class="app-shell">
     <header class="topbar">
       <div>
-        <div class="eyebrow">Word prototype playground <span class="version-badge">v0.4.25</span></div>
-        <h1>Word Shape Prototypes</h1>
-        <p>Experimental Word Path game variants. The prototypes share the same visual language, theme library and word data where applicable.</p>
+        <div class="eyebrow">Prototype playground <span class="version-badge">v0.4.26</span></div>
+        <h1>Game Prototypes</h1>
+        <p>Experimental game variants using the same visual language. Word-based prototypes share the common theme and word data where applicable.</p>
       </div>
       <div class="top-actions"><a class="ghost-btn" href="../">Game menu</a><a class="primary-btn small" href="../cube/">Open Word Cube</a></div>
     </header>
@@ -47,12 +48,18 @@
       </article>
       <article class="prototype-card">
         <div class="preview"><div class="wheel-preview"><span style="left:75px;top:18px">S</span><span style="left:129px;top:57px">A</span><span style="left:108px;top:121px">U</span><span style="left:42px;top:121px">C</span><span style="left:21px;top:57px">E</span><i></i></div></div>
-        <span class="shape-badge">5–8 letters · drag to connect</span><h2>Word Wheel</h2>
-        <p>A classic circular letter puzzle based on your reference: connect wheel letters to solve themed targets, while any other valid English words score as bonus words.</p>
-        <div class="card-actions"><a class="primary-btn" href="wheel.html?v=0.1.0">Play prototype</a></div>
+        <span class="shape-badge">5–8 letters · tap or drag</span><h2>Word Wheel</h2>
+        <p>Circular letter puzzle with shared themes, bonus words, hints and the same 1.5-second auto-check timeout as the 2D Word Path game.</p>
+        <div class="card-actions"><a class="primary-btn" href="wheel.html?v=0.1.3">Play prototype</a></div>
+      </article>
+      <article class="prototype-card">
+        <div class="preview"><div class="shikaku-preview"><span class="a">4</span><span class="a"></span><span class="b">6</span><span class="b"></span><span class="b"></span><span class="a"></span><span class="a"></span><span class="b"></span><span class="c">5</span><span class="c"></span><span class="d">3</span><span class="d"></span><span class="b"></span><span class="c"></span><span class="c"></span><span class="d"></span><span class="d"></span><span class="b"></span><span class="c"></span><span class="c"></span><span></span><span>5</span><span></span><span></span><span>4</span></div></div>
+        <span class="shape-badge">5×5 to 10×10 · unique levels</span><h2>Shikaku</h2>
+        <p>Divide the board into rectangles. Each rectangle contains exactly one clue and its area must equal that number. Every generated puzzle is checked for a unique solution.</p>
+        <div class="card-actions"><a class="primary-btn" href="shikaku.html?v=0.1.0">Play prototype</a></div>
       </article>
     </section>
-    <div class="prototype-note"><strong>v0.4.25:</strong> first Word Wheel prototype added with shared themes, target-word generation and the common offline bonus-word dictionary.</div>
+    <div class="prototype-note"><strong>v0.4.26:</strong> Shikaku added to the prototype collection with the same mint/green interface style and a uniqueness-checked level generator.</div>
   </main>
 </body>
 </html>
